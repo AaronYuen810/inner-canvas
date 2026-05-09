@@ -77,6 +77,19 @@ function applyDerivedContext(
   };
 }
 
+function summarizeFallbackTranscript(transcript: string): string {
+  const safeTranscript = transcript.trim().replace(/\s+/g, " ");
+  if (!safeTranscript) {
+    return "I recorded a short reflection.";
+  }
+
+  if (/^(i|i['\u2019](m|ve|ll|d)|my|me|we|we['\u2019](re|ve|ll|d)|our|us)\b/i.test(safeTranscript)) {
+    return safeTranscript;
+  }
+
+  return `I said: ${safeTranscript}`;
+}
+
 function fallbackBriefFromTranscript(
   transcript: string,
   previousDerivedEmotionalContext: DerivedEmotionalContext | null = null
@@ -84,7 +97,7 @@ function fallbackBriefFromTranscript(
   const safeTranscript = transcript.trim();
 
   const fallback: MixedSignalBrief = {
-    transcriptSummary: safeTranscript || "A short reflection was recorded.",
+    transcriptSummary: summarizeFallbackTranscript(safeTranscript),
     spokenValence: "neutral",
     visualAffect: previousDerivedEmotionalContext?.visualAffect || "unreadable",
     signalRelationship: previousDerivedEmotionalContext?.signalRelationship || "unclear",

@@ -245,6 +245,8 @@ function buildPromptText(
     "Analyze the reflection transcript and optional sampled frames.",
     "Return JSON only with exactly these keys:",
     "transcriptSummary, spokenValence, visualAffect, signalRelationship, sceneEnergy, spatialMood, paletteMood, abstractionLevel, confidence, spokenThemes, spokenEmotions, visualAffectSignals, signalTensions, symbolicElements, sceneConcept, atmosphere, composition.",
+    "Field rules:",
+    "- transcriptSummary: write 1-2 concise sentences in first person, as if the user is summarizing what they said. Use only the transcript content; do not summarize sampled frames or add diagnosis.",
     "Enum rules:",
     "- spokenValence: negative|mixed|neutral|positive",
     "- visualAffect: calm|guarded|tense|sad|restless|warm|flat|unreadable",

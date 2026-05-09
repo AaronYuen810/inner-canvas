@@ -21,6 +21,29 @@ type ResultScreenProps = {
 
 const REFINEMENT_OPTIONS = ["More hopeful", "More abstract", "More intense", "Less dark"] as const;
 
+function renderEmotionChips(emotions: string[] | undefined): React.ReactNode {
+  const cleanedEmotions = (emotions || []).map((emotion) => emotion.trim()).filter(Boolean);
+
+  if (cleanedEmotions.length === 0) {
+    return <p className="text-sm text-[color:var(--color-muted)]">Not available.</p>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {cleanedEmotions.map((emotion) => (
+        <span className="journal-chip" key={emotion}>
+          {emotion}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function renderInlineList(items: string[] | undefined): string {
+  const cleanedItems = (items || []).map((item) => item.trim()).filter(Boolean);
+  return cleanedItems.length > 0 ? cleanedItems.join(", ") : "Not available.";
+}
+
 export function ResultScreen({
   generatedImage,
   transcript,
@@ -72,42 +95,32 @@ export function ResultScreen({
           </div>
         ) : (
           <div className="flex aspect-square min-h-80 items-center justify-center rounded-md bg-[color:var(--color-surface)] px-5 text-center text-sm text-[color:var(--color-muted)]">
-            Your visual journal entry will appear here once the entry is created.
+            Your journal entry will appear here once the entry is created.
           </div>
         )}
       </div>
 
       <div className="journal-card p-5 sm:p-7">
         <h3 className="font-serif text-3xl font-semibold leading-tight text-[color:var(--color-ink)]">
-          Visual journal entry
+          Journal entry
         </h3>
-        <div className="journal-panel mt-5 p-4">
-          <h4 className="text-sm font-semibold text-[color:var(--color-ink)]">Mood snapshot</h4>
-          <div className="mt-3 grid gap-3 text-sm leading-6 text-[color:var(--color-muted)] md:grid-cols-2">
-            <p>
-              <span className="font-semibold text-[color:var(--color-ink)]">Summary:</span>{" "}
+        <div className="mt-5 space-y-5">
+          <div>
+            <h4 className="text-sm font-semibold text-[color:var(--color-ink)]">Summary</h4>
+            <p className="mt-2 text-base leading-7 text-[color:var(--color-muted)]">
               {mixedSignalBrief?.transcriptSummary || "Not available."}
             </p>
-            <p>
-              <span className="font-semibold text-[color:var(--color-ink)]">Spoken emotions:</span>{" "}
-              {mixedSignalBrief?.spokenEmotions.length
-                ? mixedSignalBrief.spokenEmotions.join(", ")
-                : "Not available."}
-            </p>
-            <p>
-              <span className="font-semibold text-[color:var(--color-ink)]">Atmosphere:</span>{" "}
-              {mixedSignalBrief?.atmosphere || "Not available."}
-            </p>
-            <p>
-              <span className="font-semibold text-[color:var(--color-ink)]">Scene energy:</span>{" "}
-              {mixedSignalBrief?.sceneEnergy || "Not available."}
-            </p>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold text-[color:var(--color-ink)]">Emotions</h4>
+            <div className="mt-3">{renderEmotionChips(mixedSignalBrief?.spokenEmotions)}</div>
           </div>
         </div>
 
         <details className="journal-panel mt-5 p-4">
           <summary className="cursor-pointer list-none text-sm font-semibold text-[color:var(--color-ink)] [&::-webkit-details-marker]:hidden">
-            Entry details
+            Additional context
           </summary>
           <div className="mt-3 grid gap-4 text-sm leading-6 text-[color:var(--color-muted)] md:grid-cols-2">
             <div>
@@ -119,20 +132,20 @@ export function ResultScreen({
               <p className="mt-1">{mixedSignalBrief?.atmosphere || "Not available."}</p>
             </div>
             <div>
-              <h4 className="font-semibold text-[color:var(--color-ink)]">Transcript summary</h4>
-              <p className="mt-1">{mixedSignalBrief?.transcriptSummary || "Not available."}</p>
-            </div>
-            <div>
               <h4 className="font-semibold text-[color:var(--color-ink)]">Signal relationship</h4>
               <p className="mt-1">{mixedSignalBrief?.signalRelationship || "Not available."}</p>
             </div>
             <div className="md:col-span-2">
               <h4 className="font-semibold text-[color:var(--color-ink)]">Themes carried into the canvas</h4>
-              <p className="mt-1">
-                {mixedSignalBrief?.spokenThemes.length
-                  ? mixedSignalBrief.spokenThemes.join(", ")
-                  : "Not available."}
-              </p>
+              <p className="mt-1">{renderInlineList(mixedSignalBrief?.spokenThemes)}</p>
+            </div>
+            <div className="md:col-span-2">
+              <h4 className="font-semibold text-[color:var(--color-ink)]">Visual signals</h4>
+              <p className="mt-1">{renderInlineList(mixedSignalBrief?.visualAffectSignals)}</p>
+            </div>
+            <div className="md:col-span-2">
+              <h4 className="font-semibold text-[color:var(--color-ink)]">Signal tensions</h4>
+              <p className="mt-1">{renderInlineList(mixedSignalBrief?.signalTensions)}</p>
             </div>
           </div>
         </details>
