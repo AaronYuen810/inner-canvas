@@ -543,7 +543,6 @@ export default function HomePage() {
           <ResultScreen
             errorMessage={session.errorMessage}
             generatedImage={session.generatedImage}
-            generatedPrompt={session.generatedPrompt}
             isRegenerating={session.isLoading}
             mixedSignalBrief={session.mixedSignalBrief}
             onRegenerate={(modifier) => {
@@ -568,7 +567,6 @@ export default function HomePage() {
                 errorMessage: "",
               }));
             }}
-            canPreviewPrompt={process.env.NODE_ENV !== "production"}
           />
         );
       default:

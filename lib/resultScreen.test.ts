@@ -11,7 +11,6 @@ test("result screen renders journal entry summary, emotion chips, additional con
     createElement(ResultScreen, {
       errorMessage: "",
       generatedImage: "base64payload",
-      generatedPrompt: "prompt",
       isRegenerating: false,
       mixedSignalBrief: {
         transcriptSummary: "I felt stuck, but I also noticed a steadier mood later in the day.",
@@ -38,7 +37,7 @@ test("result screen renders journal entry summary, emotion chips, additional con
       onReset: () => {},
       onStageTranscriptEdit: () => {},
       stagedTranscript: "Edited reflection",
-      transcript: "Original reflection",
+      transcript: "I have been carrying pressure this week. I still feel hopeful.",
     })
   );
 
@@ -52,12 +51,14 @@ test("result screen renders journal entry summary, emotion chips, additional con
   assert.match(html, /A path opening through fog/);
   assert.match(html, /Visual signals/);
   assert.match(html, /Signal tensions/);
-  assert.match(html, /Edit entry text/);
+  assert.match(html, /Edit entry text \(optional\)/);
   assert.match(html, /Update entry/);
   assert.match(html, /Adjust image/);
   assert.match(html, /Start over/);
   assert.match(html, /More hopeful/);
   assert.match(html, /Regenerate/);
+  assert.match(html, /Regenerate with custom prompt/);
+  assert.doesNotMatch(html, /Prompt details/);
   assert.doesNotMatch(html, /Visual journal entry/i);
   assert.doesNotMatch(html, /Mood snapshot/i);
   assert.doesNotMatch(html, /Entry details/i);
@@ -70,7 +71,6 @@ test("result screen shows canvas loading state while regenerating", () => {
     createElement(ResultScreen, {
       errorMessage: "",
       generatedImage: "",
-      generatedPrompt: "",
       isRegenerating: true,
       mixedSignalBrief: null,
       onConfirmTranscriptEdit: () => {},

@@ -41,7 +41,6 @@ test("canvas screen includes loading state and transcript edit confirmation cont
     createElement(ResultScreen, {
       errorMessage: "",
       generatedImage: "",
-      generatedPrompt: "",
       isRegenerating: true,
       mixedSignalBrief: null,
       onConfirmTranscriptEdit: () => {},
@@ -65,7 +64,6 @@ test("result screen copy uses organized journal-entry output and removes disclai
     createElement(ResultScreen, {
       errorMessage: "",
       generatedImage: "",
-      generatedPrompt: "",
       isRegenerating: false,
       mixedSignalBrief: null,
       onConfirmTranscriptEdit: () => {},
