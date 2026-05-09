@@ -60,7 +60,7 @@ test("canvas screen includes loading state and transcript edit confirmation cont
   assert.doesNotMatch(html, /Confirm tone/i);
 });
 
-test("result screen copy uses journal-entry framing and removes disclaimer wording", () => {
+test("result screen copy uses organized journal-entry output and removes disclaimer wording", () => {
   const html = renderToStaticMarkup(
     createElement(ResultScreen, {
       errorMessage: "",
@@ -78,7 +78,12 @@ test("result screen copy uses journal-entry framing and removes disclaimer wordi
     })
   );
 
-  assert.match(html, /Visual journal entry/i);
-  assert.match(html, /Mood snapshot/i);
+  assert.match(html, /Journal entry/i);
+  assert.match(html, /Summary/i);
+  assert.match(html, /Emotions/i);
+  assert.match(html, /Additional context/i);
+  assert.doesNotMatch(html, /Visual journal entry/i);
+  assert.doesNotMatch(html, /Mood snapshot/i);
+  assert.doesNotMatch(html, /Entry details/i);
   assert.doesNotMatch(html, /not a conclusion about you/i);
 });

@@ -81,6 +81,11 @@ test("POST /api/mixed-signal-brief supports transcript-only requests", async (t)
     const body = JSON.parse(String(init?.body ?? "{}"));
     assert.equal(typeof body.messages[1].content, "string");
     assert.match(String(body.messages[1].content), /Sampled frame count: 0/);
+    assert.match(
+      String(body.messages[1].content),
+      /transcriptSummary: write 1-2 concise sentences in first person/
+    );
+    assert.match(String(body.messages[1].content), /Use only the transcript content/);
 
     return new Response(
       JSON.stringify({

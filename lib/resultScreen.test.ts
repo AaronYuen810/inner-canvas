@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { ResultScreen } from "@/components/ResultScreen";
 
-test("result screen renders entry details, mood snapshot, and controls", () => {
+test("result screen renders journal entry summary, emotion chips, additional context, and controls", () => {
   const html = renderToStaticMarkup(
     createElement(ResultScreen, {
       errorMessage: "",
@@ -14,7 +14,7 @@ test("result screen renders entry details, mood snapshot, and controls", () => {
       generatedPrompt: "prompt",
       isRegenerating: false,
       mixedSignalBrief: {
-        transcriptSummary: "A short summary",
+        transcriptSummary: "I felt stuck, but I also noticed a steadier mood later in the day.",
         spokenValence: "mixed",
         visualAffect: "calm",
         signalRelationship: "aligned",
@@ -24,7 +24,7 @@ test("result screen renders entry details, mood snapshot, and controls", () => {
         abstractionLevel: "symbolic",
         confidence: "high",
         spokenThemes: ["transition", "self-trust"],
-        spokenEmotions: ["hopeful"],
+        spokenEmotions: ["mild frustration", "resolve", "contentment"],
         visualAffectSignals: ["steady gaze"],
         signalTensions: ["fear vs momentum"],
         symbolicElements: ["path"],
@@ -43,15 +43,25 @@ test("result screen renders entry details, mood snapshot, and controls", () => {
   );
 
   assert.match(html, /data:image\/png;base64,base64payload/);
-  assert.match(html, /Entry details/);
-  assert.match(html, /Mood snapshot/);
+  assert.match(html, /Journal entry/);
+  assert.match(html, /Summary/);
+  assert.match(html, /I felt stuck, but I also noticed a steadier mood later in the day\./);
+  assert.match(html, /Emotions/);
+  assert.match(html, /class="journal-chip">resolve<\/span>/);
+  assert.match(html, /Additional context/);
   assert.match(html, /A path opening through fog/);
+  assert.match(html, /Visual signals/);
+  assert.match(html, /Signal tensions/);
   assert.match(html, /Edit entry text/);
   assert.match(html, /Update entry/);
   assert.match(html, /Adjust image/);
   assert.match(html, /Start over/);
   assert.match(html, /More hopeful/);
   assert.match(html, /Regenerate/);
+  assert.doesNotMatch(html, /Visual journal entry/i);
+  assert.doesNotMatch(html, /Mood snapshot/i);
+  assert.doesNotMatch(html, /Entry details/i);
+  assert.doesNotMatch(html, /Spoken emotions/i);
   assert.doesNotMatch(html, /Visible tone signal/i);
 });
 
