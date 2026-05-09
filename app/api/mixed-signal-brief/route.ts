@@ -258,6 +258,7 @@ function buildPromptText(
     "- Do not diagnose or infer medical conditions.",
     "- Use transcript content as source of truth for themes, symbols, and narrative.",
     "- Use visual frames only to infer visible affect and atmosphere.",
+    "- Prefer symbolic objects, spaces, materials, light, and environmental composition over human-centered staging for sceneConcept and composition.",
     `Sampled frame count: ${frameCount}`,
     `Transcript:\n${transcript}`,
     `previousDerivedEmotionalContext: ${derivedContextText}`,

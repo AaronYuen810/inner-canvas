@@ -26,6 +26,10 @@ const BRIEF = {
 test("buildImagePrompt includes mixed-signal brief fields and safety rules", () => {
   const prompt = buildImagePrompt(BRIEF);
 
+  assert.match(prompt, /Create an abstract symbolic visual journal image/);
+  assert.match(prompt, /Subject: an emotionally gentle abstract composition/);
+  assert.match(prompt, /do not depict recognizable people, faces, portraits, bodies, selfies, silhouettes, or literal human figures/i);
+  assert.match(prompt, /Translate any references to a person into abstract spatial forms/);
   assert.match(prompt, /A person is processing uncertainty/);
   assert.match(prompt, /Spoken valence: mixed/);
   assert.match(prompt, /Visual affect: tense/);
@@ -44,7 +48,7 @@ test("buildImagePrompt maps known modifier guidance deterministically", () => {
     },
     {
       modifier: "More abstract",
-      expected: /Reduce literal human figure details and increase symbolic forms and composition\./,
+      expected: /Push further into non-representational shapes, layered symbolism, texture, and spatial rhythm\./,
     },
     {
       modifier: "More intense",
@@ -68,4 +72,5 @@ test("buildImagePrompt defaults to no modifier and preserves unknown modifier te
 
   assert.match(defaultPrompt, /Modifier: none/);
   assert.match(customPrompt, /Modifier: custom modifier guidance/);
+  assert.match(customPrompt, /Apply any modifier within the abstract no-human-figure constraint/);
 });

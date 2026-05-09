@@ -39,10 +39,13 @@ test("POST /api/generate-image returns base64 image and built prompt", async (t)
     assert.equal(body.n, 1);
     assert.equal(body.size, "1024x1024");
     assert.equal(body.quality, "medium");
-    assert.match(String(body.prompt), /A person processing uncertainty while moving toward clarity/);
+    assert.match(String(body.prompt), /Create an abstract symbolic visual journal image/);
+    assert.match(String(body.prompt), /do not depict recognizable people, faces, portraits, bodies, selfies, silhouettes, or literal human figures/i);
+    assert.match(String(body.prompt), /Translate any references to a person into abstract spatial forms/);
     assert.match(String(body.prompt), /Signal relationship: ambivalent/);
     assert.match(String(body.prompt), /Signal tensions: fear vs growth/);
     assert.match(String(body.prompt), /Brighten lighting, use a warmer palette/);
+    assert.match(String(body.prompt), /Apply any modifier within the abstract no-human-figure constraint/);
 
     return new Response(
       JSON.stringify({
@@ -73,7 +76,7 @@ test("POST /api/generate-image returns base64 image and built prompt", async (t)
   assert.equal(response.status, 200);
   assert.equal(json.imageBase64, "mock-base64");
   assert.equal(json.revisedPrompt, "Revised prompt");
-  assert.match(String(json.prompt), /Create one symbolic, emotionally gentle visual interpretation/);
+  assert.match(String(json.prompt), /Create an abstract symbolic visual journal image/);
 });
 
 test("POST /api/generate-image supports regenerate without modifier and keeps single-image output", async (t) => {

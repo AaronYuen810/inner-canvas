@@ -43,6 +43,10 @@ test("POST /api/mixed-signal-brief supports transcript with sampled frames", asy
       body.messages[1].content.filter((item: { type: string }) => item.type === "image_url").length,
       2
     );
+    const textContent = body.messages[1].content.find(
+      (item: { type: string }) => item.type === "text"
+    ).text;
+    assert.match(String(textContent), /Prefer symbolic objects, spaces, materials, light/);
 
     return new Response(
       JSON.stringify({
@@ -81,6 +85,7 @@ test("POST /api/mixed-signal-brief supports transcript-only requests", async (t)
     const body = JSON.parse(String(init?.body ?? "{}"));
     assert.equal(typeof body.messages[1].content, "string");
     assert.match(String(body.messages[1].content), /Sampled frame count: 0/);
+    assert.match(String(body.messages[1].content), /Prefer symbolic objects, spaces, materials, light/);
 
     return new Response(
       JSON.stringify({

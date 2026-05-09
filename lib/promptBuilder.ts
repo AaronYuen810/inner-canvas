@@ -4,7 +4,7 @@ const MODIFIER_GUIDANCE: Record<string, string> = {
   "More hopeful":
     "Brighten lighting, use a warmer palette, and include a clearer sense of path forward.",
   "More abstract":
-    "Reduce literal human figure details and increase symbolic forms and composition.",
+    "Push further into non-representational shapes, layered symbolism, texture, and spatial rhythm.",
   "More intense":
     "Increase contrast, scale, motion, and emotional pressure without introducing horror.",
   "Less dark":
@@ -30,7 +30,13 @@ export function buildImagePrompt(
     : "none";
 
   return [
-    "Create one symbolic, emotionally gentle visual interpretation of a spoken reflection.",
+    "Create an abstract symbolic visual journal image.",
+    "Subject: an emotionally gentle abstract composition that translates a spoken reflection into symbolic space, objects, light, texture, movement, and environmental forms.",
+    "Style: polished editorial art direction, layered symbolism, soft cinematic lighting, tactile atmosphere, refined color harmony, no literal portraiture.",
+    "Composition: square format, balanced focal structure, clear foreground/midground/background depth, visually coherent at thumbnail size.",
+    "Mood and palette: derive emotional tone, energy, spatial pressure, and color temperature from the mixed-signal brief.",
+    "Constraint: do not depict recognizable people, faces, portraits, bodies, selfies, silhouettes, or literal human figures.",
+    "Translate any references to a person into abstract spatial forms, objects, light, texture, movement, or environmental symbolism.",
     "Use the structured mixed-signal brief below as the source of truth.",
     "",
     `Transcript summary: ${mixedSignalBrief.transcriptSummary.trim() || "none provided"}`,
@@ -52,12 +58,13 @@ export function buildImagePrompt(
     `Composition: ${mixedSignalBrief.composition.trim() || "none provided"}`,
     "",
     "Rules:",
-    "- Speech content determines scene, symbols, objects, and narrative.",
+    "- Speech content determines symbols, objects, visual metaphors, and narrative atmosphere.",
     "- Visual affect may co-author atmosphere, scale, tension, and composition.",
     "- Do not let visual affect fully override the spoken reflection.",
     "- Do not imply diagnosis or claim this image is the user's true emotion.",
     "- Avoid text, captions, labels, UI, medical imagery, and diagnostic symbolism.",
     "- Avoid horror unless explicitly requested.",
+    "- Apply any modifier within the abstract no-human-figure constraint.",
     "",
     `Modifier: ${modifierInstruction}`,
     "",
