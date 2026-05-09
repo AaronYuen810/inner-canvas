@@ -48,6 +48,29 @@ test("returns transcript on successful transcription", async () => {
   assert.equal(payload.transcript, "calm and hopeful");
 });
 
+test("accepts video/webm recordings captured by browser media recorder", async () => {
+  setRequiredEnv();
+
+  globalThis.fetch = async () =>
+    new Response(JSON.stringify({ text: "steady and reflective" }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+
+  const formData = new FormData();
+  formData.set("audio", new File(["fake-recording"], "reflection.webm", { type: "video/webm" }));
+  const request = new Request("http://localhost/api/transcribe", {
+    method: "POST",
+    body: formData,
+  });
+
+  const response = await POST(request);
+  const payload = (await response.json()) as { transcript: string };
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.transcript, "steady and reflective");
+});
+
 test("returns 400 when no file is provided", async () => {
   setRequiredEnv();
 
@@ -107,4 +130,3 @@ test("returns safe error when upstream transcription fails", async () => {
   );
   assert.doesNotMatch(payload.error, /stack trace|internal/i);
 });
-

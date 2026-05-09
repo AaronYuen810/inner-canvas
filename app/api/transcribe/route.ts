@@ -6,6 +6,11 @@ const TRANSCRIBE_UNAVAILABLE_MESSAGE =
 const INVALID_AUDIO_MESSAGE =
   "Please upload exactly one valid audio file and try again.";
 
+function isSupportedRecordingType(fileType: string): boolean {
+  const normalizedType = fileType.toLowerCase();
+  return normalizedType.startsWith("audio/") || normalizedType.startsWith("video/");
+}
+
 function getSingleAudioFile(formData: FormData): File | null {
   const files = Array.from(formData.values()).filter(
     (value): value is File => value instanceof File
@@ -20,7 +25,7 @@ function getSingleAudioFile(formData: FormData): File | null {
     return null;
   }
 
-  if (file.type && !file.type.startsWith("audio/")) {
+  if (file.type && !isSupportedRecordingType(file.type)) {
     return null;
   }
 
