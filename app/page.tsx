@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useState } from "react";
 
 import { AppShell } from "@/components/AppShell";
-import { IntroConsentScreen } from "@/components/IntroConsentScreen";
 import { PrivacyResetButton } from "@/components/PrivacyResetButton";
 import { RecordingScreen } from "@/components/RecordingScreen";
 import { ResultScreen } from "@/components/ResultScreen";
@@ -19,16 +18,12 @@ import {
 } from "@/lib/sessionState";
 
 const NEXT_STAGE_LABEL: Record<AppStage, AppStage | null> = {
-  intro: "consent",
-  consent: "recording",
   recording: "result",
   result: null,
 };
 
 const CONTINUE_LABEL_BY_STAGE: Partial<Record<AppStage, string>> = {
-  intro: "Begin reflection",
-  consent: "Continue privately",
-  recording: "Create canvas",
+  recording: "Create entry",
 };
 
 const SAMPLE_TRANSCRIPT =
@@ -113,7 +108,7 @@ function fallbackBriefFromTranscript(
 
 function createBackupImageDataUrl(sceneConcept: string): string {
   const safeText = sceneConcept.slice(0, 160).replace(/[<>&]/g, "");
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><rect width="1024" height="1024" fill="#fffaf2"/><rect x="104" y="104" width="816" height="816" rx="32" fill="#f5efe5" stroke="#ded0bd" stroke-width="10"/><path d="M206 662c126-158 264-135 350-35 80 94 178 78 260-47" stroke="#8c6555" stroke-width="18" fill="none" stroke-linecap="round"/><path d="M418 344c0-92-136-98-152-16-13 67 76 108 122 54 65-77-35-178-125-137-101 46-85 194 21 223 74 20 139-11 190-56" stroke="#6f7f87" stroke-width="14" fill="none" stroke-linecap="round"/><path d="M474 410c66-51 126-56 191-17" stroke="#2c2925" stroke-width="10" fill="none" stroke-linecap="round"/><text x="512" y="814" text-anchor="middle" font-family="Georgia, serif" font-size="32" fill="#2c2925">Local visual companion</text><text x="512" y="866" text-anchor="middle" font-family="ui-sans-serif, system-ui" font-size="24" fill="#756f68">${safeText}</text></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><rect width="1024" height="1024" fill="#fffaf2"/><rect x="104" y="104" width="816" height="816" rx="32" fill="#f5efe5" stroke="#ded0bd" stroke-width="10"/><path d="M206 662c126-158 264-135 350-35 80 94 178 78 260-47" stroke="#8c6555" stroke-width="18" fill="none" stroke-linecap="round"/><path d="M418 344c0-92-136-98-152-16-13 67 76 108 122 54 65-77-35-178-125-137-101 46-85 194 21 223 74 20 139-11 190-56" stroke="#6f7f87" stroke-width="14" fill="none" stroke-linecap="round"/><path d="M474 410c66-51 126-56 191-17" stroke="#2c2925" stroke-width="10" fill="none" stroke-linecap="round"/><text x="512" y="814" text-anchor="middle" font-family="Georgia, serif" font-size="32" fill="#2c2925">Local journal entry</text><text x="512" y="866" text-anchor="middle" font-family="ui-sans-serif, system-ui" font-size="24" fill="#756f68">${safeText}</text></svg>`;
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
@@ -448,7 +443,7 @@ export default function HomePage() {
   };
 
   const resetSession = () => {
-    setSession((previous) => resetSessionState(previous, "intro"));
+    setSession((previous) => resetSessionState(previous, "recording"));
   };
 
   const continueLabel =
@@ -495,15 +490,6 @@ export default function HomePage() {
 
   const stageScreen = (() => {
     switch (session.stage) {
-      case "intro":
-      case "consent":
-        return (
-          <IntroConsentScreen
-            continueLabel={continueLabel}
-            onContinue={moveToNextStage}
-            stage={session.stage}
-          />
-        );
       case "recording":
         return (
           <RecordingScreen
@@ -580,7 +566,7 @@ export default function HomePage() {
   return (
     <AppShell
       stage={session.stage}
-      subtitle="Turn a short reflection into a quiet visual companion."
+      subtitle="Speak, show, or type what is here right now. InnerCanvas turns it into a visual journal and mood snapshot."
     >
       {stageScreen}
 

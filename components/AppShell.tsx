@@ -15,7 +15,7 @@ type StepContext = {
 };
 
 const STEP_CONTEXT: StepContext[] = [
-  { label: "Reflect", stages: ["intro", "consent", "recording"] },
+  { label: "Reflect", stages: ["recording"] },
   { label: "Canvas", stages: ["result"] },
 ];
 
@@ -103,6 +103,10 @@ export function AppShell({ children, stage, subtitle }: AppShellProps) {
       </header>
 
       {children}
+
+      <p className="pb-2 text-xs text-[color:var(--color-muted)]">
+        Session-only. No account or saved history. Start over clears this entry.
+      </p>
     </main>
   );
 }

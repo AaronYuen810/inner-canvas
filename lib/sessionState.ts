@@ -1,4 +1,4 @@
-export type AppStage = "intro" | "consent" | "recording" | "result";
+export type AppStage = "recording" | "result";
 
 export type MixedSignalBrief = {
   transcriptSummary: string;
@@ -47,10 +47,10 @@ export type SessionState = {
   errorMessage: string;
 };
 
-export const STAGE_ORDER: AppStage[] = ["intro", "consent", "recording", "result"];
+export const STAGE_ORDER: AppStage[] = ["recording", "result"];
 
 export const INITIAL_SESSION_STATE: SessionState = {
-  stage: "intro",
+  stage: "recording",
   mediaStream: null,
   audioBlob: null,
   transcript: "",
@@ -85,7 +85,7 @@ export function stopMediaStream(stream: MediaStream | null): void {
 
 export function resetSessionState(
   previousState: SessionState,
-  fallbackStage: "intro" | "consent" = "intro"
+  fallbackStage: AppStage = "recording"
 ): SessionState {
   stopMediaStream(previousState.mediaStream);
 

@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "InnerCanvas",
-  description: "Turn a short reflection into a quiet visual companion."
+  description: "Turn a quick check-in into a visual journal entry and mood snapshot."
 };
 
 export default function RootLayout({

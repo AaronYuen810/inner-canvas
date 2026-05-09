@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { ResultScreen } from "@/components/ResultScreen";
 
-test("result screen renders canvas details, edit reflection, and controls", () => {
+test("result screen renders entry details, mood snapshot, and controls", () => {
   const html = renderToStaticMarkup(
     createElement(ResultScreen, {
       errorMessage: "",
@@ -43,10 +43,13 @@ test("result screen renders canvas details, edit reflection, and controls", () =
   );
 
   assert.match(html, /data:image\/png;base64,base64payload/);
-  assert.match(html, /Canvas details/);
+  assert.match(html, /Entry details/);
+  assert.match(html, /Mood snapshot/);
   assert.match(html, /A path opening through fog/);
-  assert.match(html, /Edit reflection/);
-  assert.match(html, /Confirm edits and regenerate/);
+  assert.match(html, /Edit entry text/);
+  assert.match(html, /Update entry/);
+  assert.match(html, /Adjust image/);
+  assert.match(html, /Start over/);
   assert.match(html, /More hopeful/);
   assert.match(html, /Regenerate/);
   assert.doesNotMatch(html, /Visible tone signal/i);

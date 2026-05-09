@@ -4,29 +4,36 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { IntroConsentScreen } from "@/components/IntroConsentScreen";
+import { RecordingScreen } from "@/components/RecordingScreen";
 import { ResultScreen } from "@/components/ResultScreen";
+import { INITIAL_SESSION_STATE } from "@/lib/sessionState";
 
-test("intro and consent screens describe direct reflect-to-canvas flow", () => {
-  const introHtml = renderToStaticMarkup(
-    createElement(IntroConsentScreen, {
-      continueLabel: "Continue",
+test("session starts directly on the recording stage", () => {
+  assert.equal(INITIAL_SESSION_STATE.stage, "recording");
+});
+
+test("recording screen uses focused entry copy and removes repeated disclaimer text", () => {
+  const html = renderToStaticMarkup(
+    createElement(RecordingScreen, {
+      continueLabel: "Create entry",
+      onAudioReady: () => {},
       onContinue: () => {},
-      stage: "intro",
+      onError: () => {},
+      onFaceFramesReady: () => {},
+      onLoadSampleTranscript: () => {},
+      onStreamReady: () => {},
+      onTranscriptInputChange: () => {},
+      transcriptInputValue: "",
+      isCreatingCanvas: false,
     })
   );
-  const consentHtml = renderToStaticMarkup(
-    createElement(IntroConsentScreen, {
-      continueLabel: "Continue",
-      onContinue: () => {},
-      stage: "consent",
-    })
-  );
 
-  assert.match(introHtml, /quiet visual companion/i);
-  assert.match(consentHtml, /up to five sampled still frames/i);
-  assert.match(consentHtml, /audio\/text-only still works/i);
-  assert.doesNotMatch(consentHtml, /Allow cloud facial expression analysis/i);
+  assert.match(html, /Create a visual journal entry/i);
+  assert.match(
+    html,
+    /Speak, show, or type what is here right now\. InnerCanvas turns it into a visual journal and mood snapshot\./i
+  );
+  assert.doesNotMatch(html, /up to five low-detail still frames may be sampled/i);
 });
 
 test("canvas screen includes loading state and transcript edit confirmation controls", () => {
@@ -48,12 +55,12 @@ test("canvas screen includes loading state and transcript edit confirmation cont
   );
 
   assert.match(html, /Creating canvas\.\.\./);
-  assert.match(html, /Edit reflection/);
-  assert.match(html, /Confirm edits and regenerate/);
+  assert.match(html, /Edit entry text/);
+  assert.match(html, /Update entry/);
   assert.doesNotMatch(html, /Confirm tone/i);
 });
 
-test("result screen copy avoids diagnosis wording", () => {
+test("result screen copy uses journal-entry framing and removes disclaimer wording", () => {
   const html = renderToStaticMarkup(
     createElement(ResultScreen, {
       errorMessage: "",
@@ -71,5 +78,7 @@ test("result screen copy avoids diagnosis wording", () => {
     })
   );
 
-  assert.match(html, /one possible visual companion/i);
+  assert.match(html, /Visual journal entry/i);
+  assert.match(html, /Mood snapshot/i);
+  assert.doesNotMatch(html, /not a conclusion about you/i);
 });

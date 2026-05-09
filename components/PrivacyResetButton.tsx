@@ -13,7 +13,7 @@ export function PrivacyResetButton({ onReset }: PrivacyResetButtonProps) {
       type="button"
     >
       <Trash2 aria-hidden="true" size={16} />
-      Start over / delete session
+      Start over
     </button>
   );
 }

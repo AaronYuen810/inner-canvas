@@ -9,11 +9,8 @@ import {
 } from "./sessionState";
 
 test("canTransition allows only next stage", () => {
-  assert.equal(canTransition("intro", "consent"), true);
-  assert.equal(canTransition("intro", "recording"), false);
-  assert.equal(canTransition("consent", "recording"), true);
   assert.equal(canTransition("recording", "result"), true);
-  assert.equal(canTransition("consent", "result"), false);
+  assert.equal(canTransition("result", "recording"), false);
 });
 
 test("stopMediaStream stops all tracks", () => {
@@ -31,7 +28,11 @@ test("stopMediaStream stops all tracks", () => {
   assert.equal(stopCount, 2);
 });
 
-test("resetSessionState clears phase 2 session fields and returns intro", () => {
+test("initial session state starts on recording", () => {
+  assert.equal(INITIAL_SESSION_STATE.stage, "recording");
+});
+
+test("resetSessionState clears phase 2 session fields and returns recording", () => {
   const state = {
     ...INITIAL_SESSION_STATE,
     stage: "result" as const,

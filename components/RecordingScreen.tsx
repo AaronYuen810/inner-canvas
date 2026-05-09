@@ -3,7 +3,6 @@ import { FileText, Loader2, Mic, RotateCcw, Square } from "lucide-react";
 
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useMediaCapture } from "@/hooks/useMediaCapture";
-import { MAX_RECORDING_SECONDS } from "@/lib/mediaCapture";
 type RecordingScreenProps = {
   onContinue: () => void;
   continueLabel: string;
@@ -154,15 +153,11 @@ export function RecordingScreen({
   return (
     <section className="journal-card w-full p-5 sm:p-7">
       <h2 className="font-serif text-3xl font-semibold leading-tight text-[color:var(--color-ink)]">
-        Capture your reflection
+        Create a visual journal entry
       </h2>
       <p className="mt-3 max-w-2xl text-base leading-7 text-[color:var(--color-muted)]">
-        Take up to {MAX_RECORDING_SECONDS} seconds to speak plainly. The preview is here only to help you
-        stay present while the reflection is captured.
-      </p>
-      <p className="journal-panel mt-4 px-3 py-2 text-sm text-[color:var(--color-muted)]">
-        If camera is available, up to five low-detail still frames may be sampled during recording to help
-        shape the first canvas. If camera is unavailable, reflection continues in audio/text-only mode.
+        Speak, show, or type what is here right now. InnerCanvas turns it into a visual journal and mood
+        snapshot.
       </p>
       {noticeMessage ? (
         <p className="journal-panel mt-4 px-3 py-2 text-sm text-[color:var(--color-muted)]">
@@ -204,7 +199,7 @@ export function RecordingScreen({
               type="button"
             >
               <Mic aria-hidden="true" size={16} />
-              {hasAudio ? "Record again" : "Start recording"}
+              Start recording
             </button>
           ) : (
             <button

@@ -19,14 +19,6 @@ type ResultScreenProps = {
   canPreviewPrompt?: boolean;
 };
 
-function renderList(items: string[]): React.ReactNode {
-  if (items.length === 0) {
-    return <li className="text-[color:var(--color-muted)]">None provided yet.</li>;
-  }
-
-  return items.map((item) => <li key={item}>{item}</li>);
-}
-
 const REFINEMENT_OPTIONS = ["More hopeful", "More abstract", "More intense", "Less dark"] as const;
 
 export function ResultScreen({
@@ -80,22 +72,42 @@ export function ResultScreen({
           </div>
         ) : (
           <div className="flex aspect-square min-h-80 items-center justify-center rounded-md bg-[color:var(--color-surface)] px-5 text-center text-sm text-[color:var(--color-muted)]">
-            Your visual companion will appear here once the canvas is created.
+            Your visual journal entry will appear here once the entry is created.
           </div>
         )}
       </div>
 
       <div className="journal-card p-5 sm:p-7">
         <h3 className="font-serif text-3xl font-semibold leading-tight text-[color:var(--color-ink)]">
-          Your visual companion
+          Visual journal entry
         </h3>
-        <p className="mt-3 max-w-2xl text-base leading-7 text-[color:var(--color-muted)]">
-          This image is one possible visual companion for the reflection, not a conclusion about you.
-        </p>
+        <div className="journal-panel mt-5 p-4">
+          <h4 className="text-sm font-semibold text-[color:var(--color-ink)]">Mood snapshot</h4>
+          <div className="mt-3 grid gap-3 text-sm leading-6 text-[color:var(--color-muted)] md:grid-cols-2">
+            <p>
+              <span className="font-semibold text-[color:var(--color-ink)]">Summary:</span>{" "}
+              {mixedSignalBrief?.transcriptSummary || "Not available."}
+            </p>
+            <p>
+              <span className="font-semibold text-[color:var(--color-ink)]">Spoken emotions:</span>{" "}
+              {mixedSignalBrief?.spokenEmotions.length
+                ? mixedSignalBrief.spokenEmotions.join(", ")
+                : "Not available."}
+            </p>
+            <p>
+              <span className="font-semibold text-[color:var(--color-ink)]">Atmosphere:</span>{" "}
+              {mixedSignalBrief?.atmosphere || "Not available."}
+            </p>
+            <p>
+              <span className="font-semibold text-[color:var(--color-ink)]">Scene energy:</span>{" "}
+              {mixedSignalBrief?.sceneEnergy || "Not available."}
+            </p>
+          </div>
+        </div>
 
         <details className="journal-panel mt-5 p-4">
           <summary className="cursor-pointer list-none text-sm font-semibold text-[color:var(--color-ink)] [&::-webkit-details-marker]:hidden">
-            Canvas details
+            Entry details
           </summary>
           <div className="mt-3 grid gap-4 text-sm leading-6 text-[color:var(--color-muted)] md:grid-cols-2">
             <div>
@@ -116,14 +128,18 @@ export function ResultScreen({
             </div>
             <div className="md:col-span-2">
               <h4 className="font-semibold text-[color:var(--color-ink)]">Themes carried into the canvas</h4>
-              <ul className="mt-1 list-inside list-disc">{renderList(mixedSignalBrief?.spokenThemes || [])}</ul>
+              <p className="mt-1">
+                {mixedSignalBrief?.spokenThemes.length
+                  ? mixedSignalBrief.spokenThemes.join(", ")
+                  : "Not available."}
+              </p>
             </div>
           </div>
         </details>
       </div>
 
       <div className="journal-panel p-4">
-        <h3 className="text-sm font-semibold text-[color:var(--color-ink)]">Edit reflection</h3>
+        <h3 className="text-sm font-semibold text-[color:var(--color-ink)]">Edit entry text</h3>
         <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted)]">
           Confirmed edits regenerate the canvas using your edited reflection while preserving the captured emotional context.
         </p>
@@ -142,7 +158,7 @@ export function ResultScreen({
             type="button"
           >
             <WandSparkles aria-hidden="true" size={16} />
-            Confirm edits and regenerate
+            Update entry
           </button>
           <button
             className="journal-button-secondary"
@@ -156,7 +172,7 @@ export function ResultScreen({
       </div>
 
       <div className="journal-panel p-4">
-        <h3 className="text-sm font-semibold text-[color:var(--color-ink)]">Refine the companion image</h3>
+        <h3 className="text-sm font-semibold text-[color:var(--color-ink)]">Adjust image</h3>
         <div className="mt-3 flex flex-wrap gap-2">
           {REFINEMENT_OPTIONS.map((option) => (
             <button
@@ -203,7 +219,7 @@ export function ResultScreen({
           type="button"
         >
           <Trash2 aria-hidden="true" size={16} />
-          Start over / delete session
+          Start over
         </button>
       </div>
     </section>
