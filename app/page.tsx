@@ -3,30 +3,32 @@
 import { useCallback, useMemo, useState } from "react";
 
 import { AppShell } from "@/components/AppShell";
-import { GeneratingScreen } from "@/components/GeneratingScreen";
 import { IntroConsentScreen } from "@/components/IntroConsentScreen";
 import { PrivacyResetButton } from "@/components/PrivacyResetButton";
 import { RecordingScreen } from "@/components/RecordingScreen";
-import { ReflectionReviewScreen } from "@/components/ReflectionReviewScreen";
 import { ResultScreen } from "@/components/ResultScreen";
 import { buildImagePrompt } from "@/lib/promptBuilder";
 import {
   AppStage,
+  DerivedEmotionalContext,
   INITIAL_SESSION_STATE,
-  ReflectionAnalysis,
+  MixedSignalBrief,
   SessionState,
   canTransition,
   resetSessionState,
 } from "@/lib/sessionState";
-import { DEFAULT_VISIBLE_TONES } from "@/lib/visibleCue";
 
 const NEXT_STAGE_LABEL: Record<AppStage, AppStage | null> = {
   intro: "consent",
   consent: "recording",
-  recording: "review",
-  review: "generating",
-  generating: "result",
+  recording: "result",
   result: null,
+};
+
+const CONTINUE_LABEL_BY_STAGE: Partial<Record<AppStage, string>> = {
+  intro: "Begin reflection",
+  consent: "Continue privately",
+  recording: "Create canvas",
 };
 
 const SAMPLE_TRANSCRIPT =
@@ -34,30 +36,89 @@ const SAMPLE_TRANSCRIPT =
 
 const IMAGE_TIMEOUT_MS = 20_000;
 
-function fallbackAnalysisFromTranscript(transcript: string): ReflectionAnalysis {
-  const safeTranscript = transcript.trim();
+type MixedSignalBriefRequest = {
+  transcript: string;
+  frames?: string[];
+  previousDerivedEmotionalContext?: DerivedEmotionalContext;
+};
 
+type GenerateImageResponse = {
+  imageBase64?: string;
+  prompt?: string;
+  error?: string;
+};
+
+function deriveEmotionalContextFromBrief(brief: MixedSignalBrief): DerivedEmotionalContext {
   return {
-    summary: safeTranscript || "A short reflection was recorded.",
-    themes: safeTranscript ? ["personal reflection"] : [],
-    emotionalKeywords: [],
-    metaphors: [],
-    conflicts: [],
-    visualSymbols: [],
-    oneSentenceInterpretation:
-      "This image reflects one possible visual interpretation of your reflection.",
+    visualAffect: brief.visualAffect,
+    visualAffectSignals: brief.visualAffectSignals,
+    signalRelationship: brief.signalRelationship,
+    signalTensions: brief.signalTensions,
+    sceneEnergy: brief.sceneEnergy,
+    spatialMood: brief.spatialMood,
+    paletteMood: brief.paletteMood,
+    confidence: brief.confidence,
   };
 }
 
-function createBackupImageDataUrl(oneSentenceInterpretation: string): string {
-  const safeText = oneSentenceInterpretation.slice(0, 160).replace(/[<>&]/g, "");
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#18181b"/><stop offset="100%" stop-color="#334155"/></linearGradient></defs><rect width="1024" height="1024" fill="url(#bg)"/><circle cx="512" cy="420" r="220" fill="#0f172a" opacity="0.45"/><path d="M180 760 C320 610 460 620 540 700 C640 790 760 780 860 660" stroke="#f4f4f5" stroke-width="10" fill="none" opacity="0.7"/><text x="512" y="870" text-anchor="middle" font-family="ui-sans-serif, system-ui" font-size="30" fill="#e4e4e7">Fallback visual interpretation</text><text x="512" y="920" text-anchor="middle" font-family="ui-sans-serif, system-ui" font-size="24" fill="#d4d4d8">${safeText}</text></svg>`;
+function applyDerivedContext(
+  brief: MixedSignalBrief,
+  derivedEmotionalContext: DerivedEmotionalContext | null
+): MixedSignalBrief {
+  if (!derivedEmotionalContext) {
+    return brief;
+  }
+
+  return {
+    ...brief,
+    visualAffect: derivedEmotionalContext.visualAffect,
+    visualAffectSignals: derivedEmotionalContext.visualAffectSignals,
+    signalRelationship: derivedEmotionalContext.signalRelationship,
+    signalTensions: derivedEmotionalContext.signalTensions,
+    sceneEnergy: derivedEmotionalContext.sceneEnergy,
+    spatialMood: derivedEmotionalContext.spatialMood,
+    paletteMood: derivedEmotionalContext.paletteMood,
+    confidence: derivedEmotionalContext.confidence,
+  };
+}
+
+function fallbackBriefFromTranscript(
+  transcript: string,
+  previousDerivedEmotionalContext: DerivedEmotionalContext | null = null
+): MixedSignalBrief {
+  const safeTranscript = transcript.trim();
+
+  const fallback: MixedSignalBrief = {
+    transcriptSummary: safeTranscript || "A short reflection was recorded.",
+    spokenValence: "neutral",
+    visualAffect: previousDerivedEmotionalContext?.visualAffect || "unreadable",
+    signalRelationship: previousDerivedEmotionalContext?.signalRelationship || "unclear",
+    sceneEnergy: previousDerivedEmotionalContext?.sceneEnergy || "low",
+    spatialMood: previousDerivedEmotionalContext?.spatialMood || "balanced",
+    paletteMood: previousDerivedEmotionalContext?.paletteMood || "desaturated",
+    abstractionLevel: "symbolic",
+    confidence: previousDerivedEmotionalContext?.confidence || "low",
+    spokenThemes: safeTranscript ? ["personal reflection"] : [],
+    spokenEmotions: [],
+    visualAffectSignals: previousDerivedEmotionalContext?.visualAffectSignals || [],
+    signalTensions: previousDerivedEmotionalContext?.signalTensions || [],
+    symbolicElements: safeTranscript ? ["open path"] : [],
+    sceneConcept: "A symbolic scene shaped by the reflection.",
+    atmosphere: "Quiet, reflective, and emotionally gentle.",
+    composition: "Balanced square composition with one central focal path.",
+  };
+
+  return fallback;
+}
+
+function createBackupImageDataUrl(sceneConcept: string): string {
+  const safeText = sceneConcept.slice(0, 160).replace(/[<>&]/g, "");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><rect width="1024" height="1024" fill="#fffaf2"/><rect x="104" y="104" width="816" height="816" rx="32" fill="#f5efe5" stroke="#ded0bd" stroke-width="10"/><path d="M206 662c126-158 264-135 350-35 80 94 178 78 260-47" stroke="#8c6555" stroke-width="18" fill="none" stroke-linecap="round"/><path d="M418 344c0-92-136-98-152-16-13 67 76 108 122 54 65-77-35-178-125-137-101 46-85 194 21 223 74 20 139-11 190-56" stroke="#6f7f87" stroke-width="14" fill="none" stroke-linecap="round"/><path d="M474 410c66-51 126-56 191-17" stroke="#2c2925" stroke-width="10" fill="none" stroke-linecap="round"/><text x="512" y="814" text-anchor="middle" font-family="Georgia, serif" font-size="32" fill="#2c2925">Local visual companion</text><text x="512" y="866" text-anchor="middle" font-family="ui-sans-serif, system-ui" font-size="24" fill="#756f68">${safeText}</text></svg>`;
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
 export default function HomePage() {
   const [session, setSession] = useState<SessionState>(INITIAL_SESSION_STATE);
-  const [toneInput, setToneInput] = useState("");
 
   const nextStage = useMemo(() => NEXT_STAGE_LABEL[session.stage], [session.stage]);
 
@@ -76,33 +137,171 @@ export default function HomePage() {
     return payload.transcript;
   }, []);
 
-  const analyzeReflection = useCallback(async (transcript: string): Promise<ReflectionAnalysis> => {
-    const response = await fetch("/api/analyze-reflection", {
+  const createMixedSignalBrief = useCallback(async (requestPayload: MixedSignalBriefRequest) => {
+    const response = await fetch("/api/mixed-signal-brief", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ transcript }),
+      body: JSON.stringify(requestPayload),
     });
-    const payload = (await response.json()) as ReflectionAnalysis & { error?: string };
+    const payload = (await response.json()) as MixedSignalBrief & { error?: string };
     if (!response.ok) {
-      throw new Error(payload.error || "Analysis failed.");
+      throw new Error(payload.error || "Mixed-signal brief failed.");
     }
     return payload;
   }, []);
 
-  const prepareReviewStage = useCallback(async () => {
+  const requestCanvasImage = useCallback(async (mixedSignalBrief: MixedSignalBrief, modifier?: string) => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => {
+      controller.abort();
+    }, IMAGE_TIMEOUT_MS);
+
+    try {
+      const response = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          mixedSignalBrief,
+          modifier,
+        }),
+      });
+
+      const payload = (await response.json()) as GenerateImageResponse;
+
+      if (!response.ok || !payload.imageBase64 || !payload.prompt) {
+        throw new Error(payload.error || "Image generation failed.");
+      }
+
+      return {
+        imageBase64: payload.imageBase64,
+        prompt: payload.prompt,
+      };
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }, []);
+
+  const runCanvasGeneration = useCallback(
+    async ({
+      transcript,
+      modifier,
+      frames,
+      previousDerivedEmotionalContext,
+      persistDerivedContext,
+    }: {
+      transcript: string;
+      modifier?: string;
+      frames?: string[];
+      previousDerivedEmotionalContext?: DerivedEmotionalContext;
+      persistDerivedContext: boolean;
+    }) => {
+      let mixedSignalBrief = fallbackBriefFromTranscript(
+        transcript,
+        previousDerivedEmotionalContext || null
+      );
+      let mixedSignalError = "";
+
+      try {
+        const responseBrief = await createMixedSignalBrief({
+          transcript,
+          frames,
+          previousDerivedEmotionalContext,
+        });
+        mixedSignalBrief = applyDerivedContext(
+          responseBrief,
+          previousDerivedEmotionalContext || null
+        );
+      } catch {
+        mixedSignalError =
+          "Mixed-signal analysis is temporarily unavailable. Continuing with a local fallback brief.";
+      }
+
+      const derivedEmotionalContext =
+        previousDerivedEmotionalContext || deriveEmotionalContextFromBrief(mixedSignalBrief);
+      const promptFallback = buildImagePrompt(mixedSignalBrief, modifier);
+
+      setSession((previous) => {
+        if (
+          previous.sampledFaceFrames.length === 0 &&
+          previous.audioBlob === null &&
+          previous.mediaStream === null
+        ) {
+          return previous;
+        }
+
+        return {
+          ...previous,
+          sampledFaceFrames: [],
+          audioBlob: null,
+          mediaStream: null,
+        };
+      });
+
+      try {
+        const imageResult = await requestCanvasImage(mixedSignalBrief, modifier);
+        setSession((previous) => ({
+          ...previous,
+          stage: "result",
+          transcript,
+          stagedTranscript: transcript,
+          mixedSignalBrief,
+          derivedEmotionalContext: persistDerivedContext
+            ? derivedEmotionalContext
+            : previous.derivedEmotionalContext || derivedEmotionalContext,
+          sampledFaceFrames: [],
+          audioBlob: null,
+          mediaStream: null,
+          generatedImage: imageResult.imageBase64,
+          generatedPrompt: imageResult.prompt,
+          isLoading: false,
+          errorMessage: mixedSignalError,
+        }));
+        return;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Image generation failed.";
+        const backupImage = createBackupImageDataUrl(mixedSignalBrief.sceneConcept);
+        const composedError = [mixedSignalError, `${message} Showing a local backup image so the session can continue.`]
+          .filter(Boolean)
+          .join(" ");
+
+        setSession((previous) => ({
+          ...previous,
+          stage: "result",
+          transcript,
+          stagedTranscript: transcript,
+          mixedSignalBrief,
+          derivedEmotionalContext: persistDerivedContext
+            ? derivedEmotionalContext
+            : previous.derivedEmotionalContext || derivedEmotionalContext,
+          sampledFaceFrames: [],
+          audioBlob: null,
+          mediaStream: null,
+          generatedImage: backupImage,
+          generatedPrompt: promptFallback,
+          isLoading: false,
+          errorMessage: composedError,
+        }));
+      }
+    },
+    [createMixedSignalBrief, requestCanvasImage]
+  );
+
+  const createCanvasFromRecording = useCallback(async () => {
     const localTranscript = session.transcript.trim();
     const hasRecordedAudio = Boolean(session.audioBlob);
     if (!localTranscript && !hasRecordedAudio) {
       setSession((previous) => ({
         ...previous,
         errorMessage:
-          "No recorded audio is available. Add transcript text or load the sample transcript to continue.",
+          "No reflection is available yet. Record audio, write the reflection, or use the sample to continue.",
       }));
       return;
     }
 
     setSession((previous) => ({
       ...previous,
+      stage: "result",
       isLoading: true,
       errorMessage: "",
     }));
@@ -116,9 +315,9 @@ export default function HomePage() {
       const message = error instanceof Error ? error.message : "Transcription failed.";
       setSession((previous) => ({
         ...previous,
+        stage: "recording",
         isLoading: false,
-        errorMessage:
-          `${message} You can continue by entering text in transcript fallback mode or loading the sample transcript.`,
+        errorMessage: `${message} You can continue by writing the reflection or using the sample.`,
       }));
       return;
     }
@@ -126,34 +325,102 @@ export default function HomePage() {
     if (!transcript) {
       setSession((previous) => ({
         ...previous,
+        stage: "recording",
         isLoading: false,
         errorMessage:
-          "Transcription is empty. Add transcript text or load the sample transcript to continue.",
+          "The reflection came through empty. Write it in manually or use the sample to continue.",
       }));
       return;
     }
 
-    let analysis = fallbackAnalysisFromTranscript(transcript);
-    let reviewMessage = "";
-    try {
-      analysis = await analyzeReflection(transcript);
-    } catch {
-      reviewMessage =
-        "Analysis is temporarily unavailable. Showing a fallback summary so you can continue the demo.";
+    setSession((previous) => ({
+      ...previous,
+      transcript,
+      stagedTranscript: transcript,
+    }));
+
+    const sampledFrames = session.sampledFaceFrames.slice(0, 5);
+
+    await runCanvasGeneration({
+      transcript,
+      frames: sampledFrames.length > 0 ? sampledFrames : undefined,
+      persistDerivedContext: true,
+    });
+  }, [runCanvasGeneration, session.audioBlob, session.sampledFaceFrames, session.transcript, transcribeAudio]);
+
+  const handleRegenerateImage = useCallback(
+    async (modifier?: string) => {
+      if (!session.mixedSignalBrief) {
+        setSession((previous) => ({
+          ...previous,
+          errorMessage: "No mixed-signal brief is available yet. Create a canvas first.",
+        }));
+        return;
+      }
+
+      setSession((previous) => ({
+        ...previous,
+        isLoading: true,
+        errorMessage: "",
+      }));
+
+      const promptFallback = buildImagePrompt(session.mixedSignalBrief, modifier);
+
+      try {
+        const imageResult = await requestCanvasImage(session.mixedSignalBrief, modifier);
+        setSession((previous) => ({
+          ...previous,
+          generatedImage: imageResult.imageBase64,
+          generatedPrompt: imageResult.prompt,
+          isLoading: false,
+          errorMessage: "",
+        }));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Image generation failed.";
+        const backupImage = createBackupImageDataUrl(session.mixedSignalBrief.sceneConcept);
+
+        setSession((previous) => ({
+          ...previous,
+          generatedImage: backupImage,
+          generatedPrompt: promptFallback,
+          isLoading: false,
+          errorMessage: `${message} Showing a local backup image so the session can continue.`,
+        }));
+      }
+    },
+    [requestCanvasImage, session.mixedSignalBrief]
+  );
+
+  const handleConfirmTranscriptEdit = useCallback(async () => {
+    const transcript = session.stagedTranscript.trim();
+    if (!transcript) {
+      setSession((previous) => ({
+        ...previous,
+        errorMessage: "Edited reflection cannot be empty.",
+      }));
+      return;
     }
+
+    if (transcript === session.transcript.trim()) {
+      return;
+    }
+
+    const previousDerivedEmotionalContext =
+      session.derivedEmotionalContext ||
+      (session.mixedSignalBrief ? deriveEmotionalContextFromBrief(session.mixedSignalBrief) : undefined);
 
     setSession((previous) => ({
       ...previous,
-      isLoading: false,
-      stage: "review",
-      transcript,
-      reflectionAnalysis: analysis,
-      visibleCueEstimate:
-        previous.visibleCueEstimate.length > 0 ? previous.visibleCueEstimate : DEFAULT_VISIBLE_TONES,
-      confirmedVisibleTone: [],
-      errorMessage: reviewMessage,
+      isLoading: true,
+      errorMessage: "",
     }));
-  }, [analyzeReflection, session.audioBlob, session.transcript, transcribeAudio]);
+
+    await runCanvasGeneration({
+      transcript,
+      previousDerivedEmotionalContext,
+      persistDerivedContext: false,
+    });
+  }, [runCanvasGeneration, session.derivedEmotionalContext, session.mixedSignalBrief, session.stagedTranscript, session.transcript]);
 
   const moveToNextStage = async () => {
     if (!nextStage) {
@@ -161,15 +428,7 @@ export default function HomePage() {
     }
 
     if (session.stage === "recording") {
-      await prepareReviewStage();
-      return;
-    }
-
-    if (session.stage === "review" && session.confirmedVisibleTone.length === 0) {
-      setSession((previous) => ({
-        ...previous,
-        errorMessage: "Confirm or edit the visible tone estimate before continuing.",
-      }));
+      await createCanvasFromRecording();
       return;
     }
 
@@ -184,21 +443,16 @@ export default function HomePage() {
     setSession((previous) => ({
       ...previous,
       stage: nextStage,
-      visibleCueEstimate:
-        nextStage === "review" && previous.visibleCueEstimate.length === 0
-          ? DEFAULT_VISIBLE_TONES
-          : previous.visibleCueEstimate,
-      confirmedVisibleTone: nextStage === "review" ? [] : previous.confirmedVisibleTone,
       errorMessage: "",
     }));
   };
 
   const resetSession = () => {
-    setToneInput("");
     setSession((previous) => resetSessionState(previous, "intro"));
   };
 
-  const continueLabel = nextStage ? `Continue to ${nextStage}` : "Flow complete";
+  const continueLabel =
+    CONTINUE_LABEL_BY_STAGE[session.stage] || (nextStage ? `Continue to ${nextStage}` : "Flow complete");
 
   const handleAudioReady = useCallback((audioBlob: Blob | null) => {
     setSession((previous) => {
@@ -239,94 +493,6 @@ export default function HomePage() {
     });
   }, []);
 
-  const handleGenerateImage = useCallback(
-    async (modifier?: string) => {
-      setSession((previous) => ({
-        ...previous,
-        isLoading: true,
-        errorMessage: "",
-      }));
-
-      const analysisPayload =
-        session.reflectionAnalysis || fallbackAnalysisFromTranscript(session.transcript);
-      const tonePayload =
-        session.confirmedVisibleTone.length > 0
-          ? session.confirmedVisibleTone
-          : session.visibleCueEstimate;
-
-      const promptFallback = buildImagePrompt(
-        analysisPayload,
-        tonePayload,
-        undefined,
-        modifier
-      );
-      const controller = new AbortController();
-      const timeout = window.setTimeout(() => {
-        controller.abort();
-      }, IMAGE_TIMEOUT_MS);
-
-      try {
-        const response = await fetch("/api/generate-image", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          signal: controller.signal,
-          body: JSON.stringify({
-            analysis: analysisPayload,
-            confirmedVisibleTone: tonePayload,
-            modifier,
-          }),
-        });
-        const payload = (await response.json()) as {
-          imageBase64?: string;
-          prompt?: string;
-          error?: string;
-        };
-
-        if (!response.ok || !payload.imageBase64 || !payload.prompt) {
-          throw new Error(payload.error || "Image generation failed.");
-        }
-
-        setSession((previous) => ({
-          ...previous,
-          reflectionAnalysis: previous.reflectionAnalysis || analysisPayload,
-          confirmedVisibleTone:
-            previous.confirmedVisibleTone.length > 0
-              ? previous.confirmedVisibleTone
-              : tonePayload,
-          generatedImage: payload.imageBase64 || "",
-          generatedPrompt: payload.prompt || "",
-          errorMessage: "",
-          isLoading: false,
-          stage: "result",
-        }));
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Image generation failed.";
-        const backupImage = createBackupImageDataUrl(
-          analysisPayload.oneSentenceInterpretation ||
-            "One possible visual interpretation of your reflection."
-        );
-
-        setSession((previous) => ({
-          ...previous,
-          reflectionAnalysis: previous.reflectionAnalysis || analysisPayload,
-          confirmedVisibleTone:
-            previous.confirmedVisibleTone.length > 0
-              ? previous.confirmedVisibleTone
-              : tonePayload,
-          generatedImage: backupImage,
-          generatedPrompt: promptFallback,
-          stage: "result",
-          isLoading: false,
-          errorMessage:
-            `${message} Showing a local backup image so the demo can continue.`,
-        }));
-      } finally {
-        window.clearTimeout(timeout);
-      }
-    },
-    [session.confirmedVisibleTone, session.reflectionAnalysis, session.transcript, session.visibleCueEstimate]
-  );
-
   const stageScreen = (() => {
     switch (session.stage) {
       case "intro":
@@ -347,10 +513,17 @@ export default function HomePage() {
               void moveToNextStage();
             }}
             onError={handleError}
+            onFaceFramesReady={(frames) => {
+              setSession((previous) => ({
+                ...previous,
+                sampledFaceFrames: frames,
+              }));
+            }}
             onLoadSampleTranscript={() => {
               setSession((previous) => ({
                 ...previous,
                 transcript: SAMPLE_TRANSCRIPT,
+                stagedTranscript: SAMPLE_TRANSCRIPT,
                 errorMessage: "",
               }));
             }}
@@ -359,108 +532,44 @@ export default function HomePage() {
               setSession((previous) => ({
                 ...previous,
                 transcript: value,
+                stagedTranscript: value,
               }));
             }}
             transcriptInputValue={session.transcript}
-            isPreparingReview={session.isLoading}
+            isCreatingCanvas={session.isLoading}
           />
-        );
-      case "review":
-        return (
-          <ReflectionReviewScreen
-            analysis={session.reflectionAnalysis}
-            canContinue={session.confirmedVisibleTone.length > 0}
-            continueLabel={continueLabel}
-            mediaStream={session.mediaStream}
-            onAddTone={(tone) => {
-              const normalizedTone = tone.trim().toLowerCase();
-              if (!normalizedTone) {
-                return;
-              }
-
-              setSession((previous) => {
-                if (previous.visibleCueEstimate.includes(normalizedTone)) {
-                  return previous;
-                }
-
-                return {
-                  ...previous,
-                  visibleCueEstimate: [...previous.visibleCueEstimate, normalizedTone],
-                  confirmedVisibleTone: [],
-                };
-              });
-              setToneInput("");
-            }}
-            onApplyEstimatedTone={(tones) => {
-              const normalizedTones = tones
-                .map((tone) => tone.trim().toLowerCase())
-                .filter(Boolean);
-
-              setSession((previous) => ({
-                ...previous,
-                visibleCueEstimate:
-                  normalizedTones.length > 0 ? normalizedTones : previous.visibleCueEstimate,
-                confirmedVisibleTone: [],
-              }));
-            }}
-            onConfirmVisibleTone={() => {
-              setSession((previous) => ({
-                ...previous,
-                confirmedVisibleTone: [...previous.visibleCueEstimate],
-              }));
-            }}
-            onContinue={() => {
-              void moveToNextStage();
-            }}
-            onRemoveTone={(tone) => {
-              setSession((previous) => ({
-                ...previous,
-                visibleCueEstimate: previous.visibleCueEstimate.filter((current) => current !== tone),
-                confirmedVisibleTone: [],
-              }));
-            }}
-            onToneInputChange={setToneInput}
-            toneInputValue={toneInput}
-            transcript={session.transcript}
-            visibleTone={session.visibleCueEstimate}
-          />
-        );
-      case "generating":
-        return (
-          <section className="space-y-4">
-            <GeneratingScreen />
-            <div className="flex">
-              <button
-                className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-950 disabled:opacity-60"
-                disabled={session.isLoading}
-                onClick={() => {
-                  void handleGenerateImage();
-                }}
-                type="button"
-              >
-                {session.isLoading ? "Generating image..." : "Generate image"}
-              </button>
-            </div>
-          </section>
         );
       case "result":
         return (
           <ResultScreen
-            confirmedVisibleTone={session.confirmedVisibleTone}
             errorMessage={session.errorMessage}
             generatedImage={session.generatedImage}
+            generatedPrompt={session.generatedPrompt}
             isRegenerating={session.isLoading}
+            mixedSignalBrief={session.mixedSignalBrief}
             onRegenerate={(modifier) => {
-              void handleGenerateImage(modifier);
+              void handleRegenerateImage(modifier);
             }}
             onReset={resetSession}
-            generatedPrompt={session.generatedPrompt}
+            transcript={session.transcript}
+            stagedTranscript={session.stagedTranscript}
+            onStageTranscriptEdit={(value) => {
+              setSession((previous) => ({
+                ...previous,
+                stagedTranscript: value,
+              }));
+            }}
+            onConfirmTranscriptEdit={() => {
+              void handleConfirmTranscriptEdit();
+            }}
+            onDiscardTranscriptEdit={() => {
+              setSession((previous) => ({
+                ...previous,
+                stagedTranscript: previous.transcript,
+                errorMessage: "",
+              }));
+            }}
             canPreviewPrompt={process.env.NODE_ENV !== "production"}
-            oneSentenceInterpretation={
-              session.reflectionAnalysis?.oneSentenceInterpretation ||
-              "This image reflects one possible visual interpretation of your reflection."
-            }
-            themes={session.reflectionAnalysis?.themes || []}
           />
         );
       default:
@@ -469,18 +578,16 @@ export default function HomePage() {
   })();
 
   return (
-    <AppShell subtitle="MVP flow with visible tone review and symbolic image generation.">
-      <section className="w-full rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-400">Current stage</h2>
-        <p className="mt-2 text-2xl font-semibold capitalize">{session.stage}</p>
-      </section>
-
+    <AppShell
+      stage={session.stage}
+      subtitle="Turn a short reflection into a quiet visual companion."
+    >
       {stageScreen}
 
       {session.stage !== "result" ? <PrivacyResetButton onReset={resetSession} /> : null}
 
-      {session.errorMessage ? (
-        <p className="text-sm text-rose-300">{session.errorMessage}</p>
+      {session.errorMessage && session.stage !== "result" ? (
+        <p className="text-sm text-[color:var(--color-danger)]">{session.errorMessage}</p>
       ) : null}
     </AppShell>
   );

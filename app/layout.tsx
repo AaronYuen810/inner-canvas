@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "InnerCanvas",
-  description: "Reflect and generate one symbolic visual interpretation."
+  description: "Turn a short reflection into a quiet visual companion."
 };
 
 export default function RootLayout({

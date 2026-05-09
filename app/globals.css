@@ -3,9 +3,130 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+  --color-background: #f5efe5;
+  --color-paper: #fffaf2;
+  --color-surface: #fbf5ec;
+  --color-ink: #2c2925;
+  --color-muted: #756f68;
+  --color-border: #ded0bd;
+  --color-accent: #8c6555;
+  --color-accent-ink: #fffaf2;
+  --color-blue-gray: #6f7f87;
+  --color-danger: #9f3b34;
+  --shadow-soft: 0 18px 50px rgb(54 45 35 / 0.08);
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, ui-serif, serif;
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 body {
-  @apply bg-zinc-950 text-zinc-100 antialiased;
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgb(250 246 238 / 0.96), rgb(239 232 221 / 0.96)),
+    var(--color-background);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  @apply antialiased;
+}
+
+button,
+input,
+textarea,
+summary {
+  font: inherit;
+}
+
+button,
+summary {
+  @apply outline-none transition;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--color-blue-gray);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: rgb(140 101 85 / 0.22);
+}
+
+@layer components {
+  .journal-card {
+    border: 1px solid var(--color-border);
+    background: rgb(255 250 242 / 0.82);
+    box-shadow: var(--shadow-soft);
+    @apply rounded-lg;
+  }
+
+  .journal-panel {
+    border: 1px solid var(--color-border);
+    background: rgb(251 245 236 / 0.74);
+    @apply rounded-md;
+  }
+
+  .journal-field {
+    border: 1px solid var(--color-border);
+    background: rgb(255 250 242 / 0.9);
+    color: var(--color-ink);
+    @apply rounded-md;
+  }
+
+  .journal-field::placeholder {
+    color: rgb(117 111 104 / 0.72);
+  }
+
+  .journal-button-primary {
+    background: var(--color-accent);
+    color: var(--color-accent-ink);
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold shadow-sm;
+  }
+
+  .journal-button-primary:hover:not(:disabled) {
+    background: #7d594a;
+  }
+
+  .journal-button-secondary {
+    border: 1px solid var(--color-border);
+    background: rgb(255 250 242 / 0.58);
+    color: var(--color-ink);
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold;
+  }
+
+  .journal-button-secondary:hover:not(:disabled) {
+    border-color: rgb(140 101 85 / 0.48);
+    background: rgb(255 250 242 / 0.92);
+  }
+
+  .journal-button-danger {
+    border: 1px solid rgb(159 59 52 / 0.28);
+    color: var(--color-danger);
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold;
+  }
+
+  .journal-button-danger:hover:not(:disabled) {
+    background: rgb(159 59 52 / 0.08);
+  }
+
+  .journal-chip {
+    border: 1px solid rgb(140 101 85 / 0.28);
+    background: rgb(255 250 242 / 0.7);
+    color: var(--color-ink);
+    @apply inline-flex min-h-9 items-center gap-2 rounded-full px-3 text-sm font-medium;
+  }
+
+  .journal-chip:hover:not(:disabled) {
+    border-color: rgb(140 101 85 / 0.58);
+    background: rgb(255 250 242 / 0.95);
+  }
+
+  .journal-button-primary:disabled,
+  .journal-button-secondary:disabled,
+  .journal-button-danger:disabled,
+  .journal-chip:disabled {
+    @apply cursor-not-allowed opacity-55;
+  }
 }

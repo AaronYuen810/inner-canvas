@@ -1,4 +1,4 @@
-import { ReflectionAnalysis } from "@/lib/sessionState";
+import { MixedSignalBrief } from "@/lib/sessionState";
 
 const MODIFIER_GUIDANCE: Record<string, string> = {
   "More hopeful":
@@ -21,12 +21,9 @@ function formatList(items: string[]): string {
 }
 
 export function buildImagePrompt(
-  analysis: ReflectionAnalysis,
-  confirmedVisibleTone: string[],
-  style?: string,
+  mixedSignalBrief: MixedSignalBrief,
   modifier?: string
 ): string {
-  const safeStyle = style?.trim();
   const safeModifier = modifier?.trim();
   const modifierInstruction = safeModifier
     ? MODIFIER_GUIDANCE[safeModifier] || safeModifier
@@ -34,20 +31,30 @@ export function buildImagePrompt(
 
   return [
     "Create one symbolic, emotionally gentle visual interpretation of a spoken reflection.",
+    "Use the structured mixed-signal brief below as the source of truth.",
     "",
-    `Reflection summary: ${analysis.summary.trim() || "none provided"}`,
-    `Main themes: ${formatList(analysis.themes)}`,
-    `Emotional keywords from the user's own words: ${formatList(analysis.emotionalKeywords)}`,
-    `Metaphors: ${formatList(analysis.metaphors)}`,
-    `Inner conflicts: ${formatList(analysis.conflicts)}`,
-    `Possible visual symbols: ${formatList(analysis.visualSymbols)}`,
-    `One-sentence interpretation framing: ${analysis.oneSentenceInterpretation.trim() || "none provided"}`,
-    `Confirmed visible tone estimate: ${formatList(confirmedVisibleTone)}`,
-    `Style direction: ${safeStyle || "symbolic, cinematic, intimate, reflective"}`,
+    `Transcript summary: ${mixedSignalBrief.transcriptSummary.trim() || "none provided"}`,
+    `Spoken valence: ${mixedSignalBrief.spokenValence}`,
+    `Visual affect: ${mixedSignalBrief.visualAffect}`,
+    `Signal relationship: ${mixedSignalBrief.signalRelationship}`,
+    `Scene energy: ${mixedSignalBrief.sceneEnergy}`,
+    `Spatial mood: ${mixedSignalBrief.spatialMood}`,
+    `Palette mood: ${mixedSignalBrief.paletteMood}`,
+    `Abstraction level: ${mixedSignalBrief.abstractionLevel}`,
+    `Confidence: ${mixedSignalBrief.confidence}`,
+    `Spoken themes: ${formatList(mixedSignalBrief.spokenThemes)}`,
+    `Spoken emotions: ${formatList(mixedSignalBrief.spokenEmotions)}`,
+    `Visual affect signals: ${formatList(mixedSignalBrief.visualAffectSignals)}`,
+    `Signal tensions: ${formatList(mixedSignalBrief.signalTensions)}`,
+    `Symbolic elements: ${formatList(mixedSignalBrief.symbolicElements)}`,
+    `Scene concept: ${mixedSignalBrief.sceneConcept.trim() || "none provided"}`,
+    `Atmosphere: ${mixedSignalBrief.atmosphere.trim() || "none provided"}`,
+    `Composition: ${mixedSignalBrief.composition.trim() || "none provided"}`,
     "",
     "Rules:",
     "- Speech content determines scene, symbols, objects, and narrative.",
-    "- Visible tone only influences mood, color, lighting, atmosphere, and intensity.",
+    "- Visual affect may co-author atmosphere, scale, tension, and composition.",
+    "- Do not let visual affect fully override the spoken reflection.",
     "- Do not imply diagnosis or claim this image is the user's true emotion.",
     "- Avoid text, captions, labels, UI, medical imagery, and diagnostic symbolism.",
     "- Avoid horror unless explicitly requested.",

@@ -4,3 +4,8 @@ name = "inner-canvas"
 
 [setup]
 script = ""
+
+[[actions]]
+name = "Copy .env.local"
+icon = "tool"
+command = "./setup.sh"

@@ -4,38 +4,21 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { ReflectionReviewScreen } from "@/components/ReflectionReviewScreen";
+import { AppShell } from "@/components/AppShell";
 
-test("review screen renders transcript and analysis sections", () => {
+test("app shell progress nav only shows Reflect and Canvas", () => {
   const html = renderToStaticMarkup(
-    createElement(ReflectionReviewScreen, {
-      analysis: {
-        summary: "Summary",
-        themes: ["change"],
-        emotionalKeywords: ["hopeful"],
-        metaphors: ["storm passing"],
-        conflicts: ["fear vs growth"],
-        visualSymbols: ["path at dawn"],
-        oneSentenceInterpretation: "A person moving from tension toward hope.",
+    createElement(
+      AppShell,
+      {
+        stage: "result",
+        subtitle: "Turn a short reflection into a quiet visual companion.",
       },
-      canContinue: true,
-      continueLabel: "Continue to generating",
-      onAddTone: () => {},
-      onConfirmVisibleTone: () => {},
-      onContinue: () => {},
-      onRemoveTone: () => {},
-      onToneInputChange: () => {},
-      toneInputValue: "",
-      transcript: "I feel stuck, but things are improving.",
-      visibleTone: ["thoughtful"],
-    })
+      createElement("div", null, "content")
+    )
   );
 
-  assert.match(html, /I feel stuck, but things are improving\./);
-  assert.match(html, /A person moving from tension toward hope\./);
-  assert.match(html, /change/);
-  assert.match(html, /hopeful/);
-  assert.match(html, /storm passing/);
-  assert.match(html, /fear vs growth/);
-  assert.match(html, /path at dawn/);
+  assert.match(html, />Reflect</);
+  assert.match(html, />Canvas</);
+  assert.doesNotMatch(html, />Review</);
 });

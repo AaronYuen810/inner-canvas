@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
+import { FileText, Loader2, Mic, RotateCcw, Square } from "lucide-react";
 
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useMediaCapture } from "@/hooks/useMediaCapture";
@@ -8,25 +9,31 @@ type RecordingScreenProps = {
   continueLabel: string;
   onStreamReady: (stream: MediaStream | null) => void;
   onAudioReady: (audioBlob: Blob | null) => void;
+  onFaceFramesReady: (frames: string[]) => void;
   onError: (message: string) => void;
   transcriptInputValue: string;
   onTranscriptInputChange: (value: string) => void;
   onLoadSampleTranscript: () => void;
-  isPreparingReview: boolean;
+  isCreatingCanvas: boolean;
 };
+
+const MAX_FACE_FRAME_SAMPLES = 5;
+const FACE_FRAME_SAMPLE_INTERVAL_MS = 3_000;
 
 export function RecordingScreen({
   onContinue,
   continueLabel,
   onStreamReady,
   onAudioReady,
+  onFaceFramesReady,
   onError,
   transcriptInputValue,
   onTranscriptInputChange,
   onLoadSampleTranscript,
-  isPreparingReview,
+  isCreatingCanvas,
 }: RecordingScreenProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const sampledFaceFramesRef = useRef<string[]>([]);
   const {
     stream,
     captureMode,
@@ -59,6 +66,50 @@ export function RecordingScreen({
     onAudioReady(audioBlob);
   }, [audioBlob, onAudioReady]);
 
+  const sampleFaceFrame = useCallback(() => {
+    const video = videoRef.current;
+    if (
+      !video ||
+      video.videoWidth === 0 ||
+      video.videoHeight === 0 ||
+      sampledFaceFramesRef.current.length >= MAX_FACE_FRAME_SAMPLES
+    ) {
+      return;
+    }
+
+    const maxSide = 512;
+    const scale = Math.min(maxSide / Math.max(video.videoWidth, video.videoHeight), 1);
+    const width = Math.max(Math.round(video.videoWidth * scale), 1);
+    const height = Math.max(Math.round(video.videoHeight * scale), 1);
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return;
+    }
+
+    context.drawImage(video, 0, 0, width, height);
+    const frame = canvas.toDataURL("image/jpeg", 0.72);
+    sampledFaceFramesRef.current = [...sampledFaceFramesRef.current, frame];
+    onFaceFramesReady(sampledFaceFramesRef.current);
+  }, [onFaceFramesReady]);
+
+  useEffect(() => {
+    if (!isRecording || captureMode !== "audio-video") {
+      return;
+    }
+
+    sampleFaceFrame();
+    const interval = window.setInterval(() => {
+      sampleFaceFrame();
+    }, FACE_FRAME_SAMPLE_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [captureMode, isRecording, sampleFaceFrame]);
+
   useEffect(() => {
     if (!supportsMediaRecorder) {
       onError("Audio recording is not supported in this browser (MediaRecorder unavailable).");
@@ -71,6 +122,8 @@ export function RecordingScreen({
 
   const handleStartCapture = async () => {
     clearError();
+    sampledFaceFramesRef.current = [];
+    onFaceFramesReady([]);
     const mediaStream = await requestMedia();
     if (!mediaStream) {
       return;
@@ -90,6 +143,8 @@ export function RecordingScreen({
     clearRecording();
     clearError();
     onAudioReady(null);
+    sampledFaceFramesRef.current = [];
+    onFaceFramesReady([]);
     onError("");
   };
 
@@ -97,106 +152,127 @@ export function RecordingScreen({
   const hasTranscriptFallback = transcriptInputValue.trim().length > 0;
 
   return (
-    <section className="w-full rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
-      <h2 className="text-2xl font-semibold">Recording</h2>
-      <p className="mt-3 max-w-2xl text-zinc-300">
-        Record up to {MAX_RECORDING_SECONDS} seconds. This step uses your local camera preview and microphone
-        to prepare a transcript.
+    <section className="journal-card w-full p-5 sm:p-7">
+      <h2 className="font-serif text-3xl font-semibold leading-tight text-[color:var(--color-ink)]">
+        Capture your reflection
+      </h2>
+      <p className="mt-3 max-w-2xl text-base leading-7 text-[color:var(--color-muted)]">
+        Take up to {MAX_RECORDING_SECONDS} seconds to speak plainly. The preview is here only to help you
+        stay present while the reflection is captured.
       </p>
-      {noticeMessage ? <p className="mt-3 text-sm text-amber-300">{noticeMessage}</p> : null}
-      <p className="mt-3 text-sm text-zinc-400">
-        Visible emotional cue language remains a visible tone estimate only.
+      <p className="journal-panel mt-4 px-3 py-2 text-sm text-[color:var(--color-muted)]">
+        If camera is available, up to five low-detail still frames may be sampled during recording to help
+        shape the first canvas. If camera is unavailable, reflection continues in audio/text-only mode.
       </p>
-      <div className="mt-5 grid gap-5 md:grid-cols-[minmax(0,1fr)_220px]">
-        <div className="overflow-hidden rounded-lg border border-zinc-700 bg-zinc-950">
+      {noticeMessage ? (
+        <p className="journal-panel mt-4 px-3 py-2 text-sm text-[color:var(--color-muted)]">
+          {noticeMessage}
+        </p>
+      ) : null}
+
+      <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_240px]">
+        <div className="overflow-hidden rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-ink)]">
           {stream && captureMode === "audio-video" ? (
-            <video autoPlay className="h-64 w-full object-cover" muted playsInline ref={videoRef} />
+            <video autoPlay className="aspect-video w-full object-cover" muted playsInline ref={videoRef} />
           ) : (
-            <div className="flex h-64 items-center justify-center text-sm text-zinc-400">
+            <div className="flex aspect-video items-center justify-center px-6 text-center text-sm text-[rgb(255_250_242_/_0.72)]">
               {captureMode === "audio-only"
-                ? "Speech-only mode is active. Webcam preview is disabled."
-                : "Webcam preview appears after permission is granted."}
+                ? "Audio reflection is active. The camera preview is unavailable."
+                : "Your camera preview will appear after permission is granted."}
             </div>
           )}
         </div>
 
         <div className="space-y-3">
-          <div className="rounded-md border border-zinc-700 bg-zinc-900 p-3">
-            <p className="text-sm text-zinc-300">
-              Timer: <span className="font-semibold text-zinc-100">{remainingSeconds}s</span>
+          <div className="journal-panel p-4">
+            <p className="text-sm text-[color:var(--color-muted)]">
+              Time left: <span className="font-semibold text-[color:var(--color-ink)]">{remainingSeconds}s</span>
             </p>
-            <p className="mt-1 text-xs text-zinc-400">
-              Status:{" "}
-              <span className={isRecording ? "font-semibold text-rose-300" : "font-semibold text-zinc-200"}>
-                {isRecording ? "Recording" : hasAudio ? "Recorded" : "Idle"}
+            <p className="mt-1 text-xs text-[color:var(--color-muted)]">
+              Reflection:{" "}
+              <span className={isRecording ? "font-semibold text-[color:var(--color-danger)]" : "font-semibold text-[color:var(--color-ink)]"}>
+                {isRecording ? "Listening" : hasAudio ? "Saved" : "Ready"}
               </span>
             </p>
           </div>
 
           {!isRecording ? (
             <button
-              className="w-full rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-950 disabled:cursor-not-allowed disabled:opacity-60"
+              className="journal-button-primary w-full"
               disabled={!supportsMediaRecorder}
               onClick={handleStartCapture}
               type="button"
             >
+              <Mic aria-hidden="true" size={16} />
               {hasAudio ? "Record again" : "Start recording"}
             </button>
           ) : (
             <button
-              className="w-full rounded-md bg-rose-300 px-4 py-2 text-sm font-medium text-zinc-950"
+              className="journal-button-danger w-full bg-[rgb(159_59_52_/_0.08)]"
               onClick={stopRecording}
               type="button"
             >
+              <Square aria-hidden="true" size={15} />
               Stop recording
             </button>
           )}
 
           <button
-            className="w-full rounded-md border border-zinc-600 px-4 py-2 text-sm font-medium text-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
+            className="journal-button-secondary w-full"
             disabled={!hasAudio}
             onClick={handleRetake}
             type="button"
           >
+            <RotateCcw aria-hidden="true" size={16} />
             Clear recording
           </button>
         </div>
       </div>
 
-      {mediaError ? <p className="mt-4 text-sm text-rose-300">{mediaError}</p> : null}
+      {mediaError ? <p className="mt-4 text-sm text-[color:var(--color-danger)]">{mediaError}</p> : null}
       {!supportsMediaRecorder ? (
-        <p className="mt-4 text-sm text-rose-300">
+        <p className="mt-4 text-sm text-[color:var(--color-danger)]">
           Audio recording is not supported in this browser (MediaRecorder unavailable).
         </p>
       ) : null}
 
-      <div className="mt-5 rounded-lg border border-zinc-800 bg-zinc-950/60 p-4">
-        <h3 className="font-medium text-zinc-100">Transcript fallback</h3>
-        <p className="mt-2 text-sm text-zinc-400">
-          If microphone recording fails, you can continue by pasting text or loading a sample transcript.
+      <details className="journal-panel mt-5 p-4">
+        <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-[color:var(--color-ink)] [&::-webkit-details-marker]:hidden">
+          <FileText aria-hidden="true" size={16} />
+          Need to type it instead?
+        </summary>
+        <p className="mt-3 text-sm leading-6 text-[color:var(--color-muted)]">
+          If speaking is not available, write the reflection here or start from the sample.
         </p>
         <textarea
-          className="mt-3 min-h-28 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
+          className="journal-field mt-3 min-h-28 w-full px-3 py-2 text-sm"
           onChange={(event) => onTranscriptInputChange(event.target.value)}
-          placeholder="Type or paste a reflection transcript for fallback mode."
+          placeholder="Write or paste a short reflection."
           value={transcriptInputValue}
         />
         <button
-          className="mt-3 rounded-md border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-100"
+          className="journal-button-secondary mt-3"
           onClick={onLoadSampleTranscript}
           type="button"
         >
-          Load sample transcript
+          Use sample reflection
         </button>
-      </div>
+      </details>
 
       <button
-        className="mt-5 rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-950 disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={(!hasAudio && !hasTranscriptFallback) || isPreparingReview}
+        className="journal-button-primary mt-5"
+        disabled={(!hasAudio && !hasTranscriptFallback) || isCreatingCanvas}
         onClick={onContinue}
         type="button"
       >
-        {isPreparingReview ? "Preparing review..." : continueLabel}
+        {isCreatingCanvas ? (
+          <>
+            <Loader2 aria-hidden="true" className="animate-spin" size={16} />
+            Creating canvas...
+          </>
+        ) : (
+          continueLabel
+        )}
       </button>
     </section>
   );

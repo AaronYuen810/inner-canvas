@@ -4,12 +4,10 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { GeneratingScreen } from "@/components/GeneratingScreen";
 import { IntroConsentScreen } from "@/components/IntroConsentScreen";
-import { ReflectionReviewScreen } from "@/components/ReflectionReviewScreen";
 import { ResultScreen } from "@/components/ResultScreen";
 
-test("intro and consent screens keep cautious tone language", () => {
+test("intro and consent screens describe direct reflect-to-canvas flow", () => {
   const introHtml = renderToStaticMarkup(
     createElement(IntroConsentScreen, {
       continueLabel: "Continue",
@@ -25,48 +23,53 @@ test("intro and consent screens keep cautious tone language", () => {
     })
   );
 
-  assert.match(introHtml, /visual interpretation/i);
-  assert.match(consentHtml, /visible emotional cue/i);
+  assert.match(introHtml, /quiet visual companion/i);
+  assert.match(consentHtml, /up to five sampled still frames/i);
+  assert.match(consentHtml, /audio\/text-only still works/i);
+  assert.doesNotMatch(consentHtml, /Allow cloud facial expression analysis/i);
 });
 
-test("review screen includes editable visible cue estimate notice", () => {
+test("canvas screen includes loading state and transcript edit confirmation controls", () => {
   const html = renderToStaticMarkup(
-    createElement(ReflectionReviewScreen, {
-      analysis: null,
-      canContinue: false,
-      continueLabel: "Continue",
-      onAddTone: () => {},
-      onConfirmVisibleTone: () => {},
-      onContinue: () => {},
-      onRemoveTone: () => {},
-      onToneInputChange: () => {},
-      toneInputValue: "",
-      transcript: "",
-      visibleTone: ["thoughtful", "soft"],
-    })
-  );
-
-  assert.match(html, /This is only a visible cue estimate\. You can edit it\./);
-  assert.match(html, /Confirm visible tone/);
-  assert.match(html, /disabled=/);
-});
-
-test("generating and result screens avoid diagnosis wording", () => {
-  const generatingHtml = renderToStaticMarkup(createElement(GeneratingScreen));
-  const resultHtml = renderToStaticMarkup(
     createElement(ResultScreen, {
-      confirmedVisibleTone: ["thoughtful"],
       errorMessage: "",
       generatedImage: "",
-      isRegenerating: false,
+      generatedPrompt: "",
+      isRegenerating: true,
+      mixedSignalBrief: null,
+      onConfirmTranscriptEdit: () => {},
+      onDiscardTranscriptEdit: () => {},
       onRegenerate: () => {},
       onReset: () => {},
-      oneSentenceInterpretation:
-        "This image reflects one possible visual interpretation of the reflection.",
-      themes: ["transition"],
+      onStageTranscriptEdit: () => {},
+      stagedTranscript: "Edited reflection",
+      transcript: "Original reflection",
     })
   );
 
-  assert.match(generatingHtml, /does not infer a diagnosis/i);
-  assert.match(resultHtml, /one possible visual interpretation/i);
+  assert.match(html, /Creating canvas\.\.\./);
+  assert.match(html, /Edit reflection/);
+  assert.match(html, /Confirm edits and regenerate/);
+  assert.doesNotMatch(html, /Confirm tone/i);
+});
+
+test("result screen copy avoids diagnosis wording", () => {
+  const html = renderToStaticMarkup(
+    createElement(ResultScreen, {
+      errorMessage: "",
+      generatedImage: "",
+      generatedPrompt: "",
+      isRegenerating: false,
+      mixedSignalBrief: null,
+      onConfirmTranscriptEdit: () => {},
+      onDiscardTranscriptEdit: () => {},
+      onRegenerate: () => {},
+      onReset: () => {},
+      onStageTranscriptEdit: () => {},
+      stagedTranscript: "Reflection",
+      transcript: "Reflection",
+    })
+  );
+
+  assert.match(html, /one possible visual companion/i);
 });

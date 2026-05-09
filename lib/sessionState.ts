@@ -1,52 +1,63 @@
-export type AppStage =
-  | "intro"
-  | "consent"
-  | "recording"
-  | "review"
-  | "generating"
-  | "result";
+export type AppStage = "intro" | "consent" | "recording" | "result";
 
-export type ReflectionAnalysis = {
-  summary: string;
-  themes: string[];
-  emotionalKeywords: string[];
-  metaphors: string[];
-  conflicts: string[];
-  visualSymbols: string[];
-  oneSentenceInterpretation: string;
+export type MixedSignalBrief = {
+  transcriptSummary: string;
+  spokenValence: "negative" | "mixed" | "neutral" | "positive";
+  visualAffect: "calm" | "guarded" | "tense" | "sad" | "restless" | "warm" | "flat" | "unreadable";
+  signalRelationship: "aligned" | "contrasting" | "amplifying" | "masking" | "ambivalent" | "unclear";
+  sceneEnergy: "still" | "low" | "medium" | "high";
+  spatialMood: "open" | "balanced" | "compressed" | "fragmented";
+  paletteMood: "muted_warm" | "muted_cool" | "earthy" | "desaturated" | "high_contrast" | "luminous";
+  abstractionLevel: "symbolic" | "semi_figurative" | "abstract";
+  confidence: "low" | "medium" | "high";
+  spokenThemes: string[];
+  spokenEmotions: string[];
+  visualAffectSignals: string[];
+  signalTensions: string[];
+  symbolicElements: string[];
+  sceneConcept: string;
+  atmosphere: string;
+  composition: string;
 };
+
+export type DerivedEmotionalContext = Pick<
+  MixedSignalBrief,
+  | "visualAffect"
+  | "visualAffectSignals"
+  | "signalRelationship"
+  | "signalTensions"
+  | "sceneEnergy"
+  | "spatialMood"
+  | "paletteMood"
+  | "confidence"
+>;
 
 export type SessionState = {
   stage: AppStage;
   mediaStream: MediaStream | null;
   audioBlob: Blob | null;
   transcript: string;
-  reflectionAnalysis: ReflectionAnalysis | null;
-  visibleCueEstimate: string[];
-  confirmedVisibleTone: string[];
+  stagedTranscript: string;
+  sampledFaceFrames: string[];
+  mixedSignalBrief: MixedSignalBrief | null;
+  derivedEmotionalContext: DerivedEmotionalContext | null;
   generatedPrompt: string;
   generatedImage: string;
   isLoading: boolean;
   errorMessage: string;
 };
 
-export const STAGE_ORDER: AppStage[] = [
-  "intro",
-  "consent",
-  "recording",
-  "review",
-  "generating",
-  "result",
-];
+export const STAGE_ORDER: AppStage[] = ["intro", "consent", "recording", "result"];
 
 export const INITIAL_SESSION_STATE: SessionState = {
   stage: "intro",
   mediaStream: null,
   audioBlob: null,
   transcript: "",
-  reflectionAnalysis: null,
-  visibleCueEstimate: [],
-  confirmedVisibleTone: [],
+  stagedTranscript: "",
+  sampledFaceFrames: [],
+  mixedSignalBrief: null,
+  derivedEmotionalContext: null,
   generatedPrompt: "",
   generatedImage: "",
   isLoading: false,

@@ -1,10 +1,16 @@
-import React, { useState } from "react";
+import React from "react";
+import { Loader2, RefreshCcw, Sparkles, Trash2, WandSparkles } from "lucide-react";
+
+import { MixedSignalBrief } from "@/lib/sessionState";
 
 type ResultScreenProps = {
   generatedImage: string;
-  oneSentenceInterpretation: string;
-  themes: string[];
-  confirmedVisibleTone: string[];
+  transcript: string;
+  stagedTranscript: string;
+  mixedSignalBrief: MixedSignalBrief | null;
+  onStageTranscriptEdit: (value: string) => void;
+  onConfirmTranscriptEdit: () => void;
+  onDiscardTranscriptEdit: () => void;
   onRegenerate: (modifier?: string) => void;
   isRegenerating: boolean;
   errorMessage: string;
@@ -15,17 +21,22 @@ type ResultScreenProps = {
 
 function renderList(items: string[]): React.ReactNode {
   if (items.length === 0) {
-    return <li className="text-zinc-400">None provided yet.</li>;
+    return <li className="text-[color:var(--color-muted)]">None provided yet.</li>;
   }
 
   return items.map((item) => <li key={item}>{item}</li>);
 }
 
+const REFINEMENT_OPTIONS = ["More hopeful", "More abstract", "More intense", "Less dark"] as const;
+
 export function ResultScreen({
   generatedImage,
-  oneSentenceInterpretation,
-  themes,
-  confirmedVisibleTone,
+  transcript,
+  stagedTranscript,
+  mixedSignalBrief,
+  onStageTranscriptEdit,
+  onConfirmTranscriptEdit,
+  onDiscardTranscriptEdit,
   onRegenerate,
   isRegenerating,
   errorMessage,
@@ -33,113 +44,168 @@ export function ResultScreen({
   generatedPrompt = "",
   canPreviewPrompt = false,
 }: ResultScreenProps) {
-  const [showPromptPreview, setShowPromptPreview] = useState(false);
   const imageSource = generatedImage
     ? generatedImage.startsWith("data:")
       ? generatedImage
       : `data:image/png;base64,${generatedImage}`
     : "";
 
+  const hasPendingTranscriptEdit = stagedTranscript.trim() !== transcript.trim();
+  const canConfirmTranscriptEdit = stagedTranscript.trim().length > 0 && hasPendingTranscriptEdit;
+
   return (
-    <section className="w-full rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
-      <h2 className="text-2xl font-semibold">Result</h2>
-      <p className="mt-3 max-w-2xl text-zinc-300">
-        The final image is presented as one possible visual interpretation, not a conclusion about you.
-      </p>
-      <div className="mt-5 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-950">
+    <section className="w-full space-y-5">
+      <h2 className="sr-only">Canvas</h2>
+      <div className="journal-card overflow-hidden p-3 sm:p-4">
         {generatedImage ? (
-          <img
-            alt="Generated symbolic interpretation"
-            className="h-auto w-full object-cover"
-            src={imageSource}
-          />
+          <div className="relative">
+            <img
+              alt="Generated visual companion"
+              className="aspect-square h-auto w-full rounded-md object-cover"
+              src={imageSource}
+            />
+            {isRegenerating ? (
+              <div className="absolute inset-0 flex items-center justify-center rounded-md bg-[rgb(26_28_33_/_0.45)]">
+                <p className="inline-flex items-center gap-2 rounded-full bg-[rgb(255_250_242_/_0.9)] px-4 py-2 text-sm font-semibold text-[color:var(--color-ink)]">
+                  <Loader2 aria-hidden="true" className="animate-spin" size={16} />
+                  Creating canvas...
+                </p>
+              </div>
+            ) : null}
+          </div>
+        ) : isRegenerating ? (
+          <div className="flex aspect-square min-h-80 flex-col items-center justify-center gap-3 rounded-md bg-[color:var(--color-surface)] px-5 text-center text-sm text-[color:var(--color-muted)]">
+            <Loader2 aria-hidden="true" className="animate-spin" size={20} />
+            <p>Creating canvas...</p>
+          </div>
         ) : (
-          <div className="flex min-h-80 items-center justify-center px-5 text-center text-sm text-zinc-400">
-            Generated image preview appears here once image generation completes.
+          <div className="flex aspect-square min-h-80 items-center justify-center rounded-md bg-[color:var(--color-surface)] px-5 text-center text-sm text-[color:var(--color-muted)]">
+            Your visual companion will appear here once the canvas is created.
           </div>
         )}
       </div>
-      <div className="mt-5 grid gap-4 text-sm md:grid-cols-2">
-        <div>
-          <h3 className="font-medium text-zinc-100">One-sentence interpretation</h3>
-          <p className="mt-1 text-zinc-300">{oneSentenceInterpretation}</p>
-        </div>
-        <div>
-          <h3 className="font-medium text-zinc-100">Confirmed visible tone</h3>
-          <ul className="mt-1 list-inside list-disc text-zinc-300">{renderList(confirmedVisibleTone)}</ul>
-        </div>
-        <div className="md:col-span-2">
-          <h3 className="font-medium text-zinc-100">Themes</h3>
-          <ul className="mt-1 list-inside list-disc text-zinc-300">{renderList(themes)}</ul>
-        </div>
+
+      <div className="journal-card p-5 sm:p-7">
+        <h3 className="font-serif text-3xl font-semibold leading-tight text-[color:var(--color-ink)]">
+          Your visual companion
+        </h3>
+        <p className="mt-3 max-w-2xl text-base leading-7 text-[color:var(--color-muted)]">
+          This image is one possible visual companion for the reflection, not a conclusion about you.
+        </p>
+
+        <details className="journal-panel mt-5 p-4">
+          <summary className="cursor-pointer list-none text-sm font-semibold text-[color:var(--color-ink)] [&::-webkit-details-marker]:hidden">
+            Canvas details
+          </summary>
+          <div className="mt-3 grid gap-4 text-sm leading-6 text-[color:var(--color-muted)] md:grid-cols-2">
+            <div>
+              <h4 className="font-semibold text-[color:var(--color-ink)]">Scene concept</h4>
+              <p className="mt-1">{mixedSignalBrief?.sceneConcept || "Not available."}</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-[color:var(--color-ink)]">Atmosphere</h4>
+              <p className="mt-1">{mixedSignalBrief?.atmosphere || "Not available."}</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-[color:var(--color-ink)]">Transcript summary</h4>
+              <p className="mt-1">{mixedSignalBrief?.transcriptSummary || "Not available."}</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-[color:var(--color-ink)]">Signal relationship</h4>
+              <p className="mt-1">{mixedSignalBrief?.signalRelationship || "Not available."}</p>
+            </div>
+            <div className="md:col-span-2">
+              <h4 className="font-semibold text-[color:var(--color-ink)]">Themes carried into the canvas</h4>
+              <ul className="mt-1 list-inside list-disc">{renderList(mixedSignalBrief?.spokenThemes || [])}</ul>
+            </div>
+          </div>
+        </details>
       </div>
-      <div className="mt-5 flex flex-wrap gap-3">
-        <button
-          className="rounded-md border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-100"
+
+      <div className="journal-panel p-4">
+        <h3 className="text-sm font-semibold text-[color:var(--color-ink)]">Edit reflection</h3>
+        <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted)]">
+          Confirmed edits regenerate the canvas using your edited reflection while preserving the captured emotional context.
+        </p>
+        <textarea
+          className="journal-field mt-3 min-h-28 w-full px-3 py-2 text-sm"
           disabled={isRegenerating}
-          onClick={() => onRegenerate("More hopeful")}
-          type="button"
-        >
-          More hopeful
-        </button>
-        <button
-          className="rounded-md border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-100"
-          disabled={isRegenerating}
-          onClick={() => onRegenerate("More abstract")}
-          type="button"
-        >
-          More abstract
-        </button>
-        <button
-          className="rounded-md border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-100"
-          disabled={isRegenerating}
-          onClick={() => onRegenerate("More intense")}
-          type="button"
-        >
-          More intense
-        </button>
-        <button
-          className="rounded-md border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-100"
-          disabled={isRegenerating}
-          onClick={() => onRegenerate("Less dark")}
-          type="button"
-        >
-          Less dark
-        </button>
-        <button
-          className="rounded-md border border-zinc-700 px-3 py-2 text-sm font-medium text-zinc-100"
-          disabled={isRegenerating}
-          onClick={() => onRegenerate()}
-          type="button"
-        >
-          Regenerate
-        </button>
-      </div>
-      {canPreviewPrompt && generatedPrompt ? (
-        <div className="mt-5 rounded-lg border border-zinc-800 bg-zinc-950/60 p-4">
+          onChange={(event) => onStageTranscriptEdit(event.target.value)}
+          placeholder="Edit your reflection"
+          value={stagedTranscript}
+        />
+        <div className="mt-3 flex flex-wrap gap-2">
           <button
-            className="rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-100"
-            onClick={() => setShowPromptPreview((previous) => !previous)}
+            className="journal-button-primary"
+            disabled={!canConfirmTranscriptEdit || isRegenerating}
+            onClick={onConfirmTranscriptEdit}
             type="button"
           >
-            {showPromptPreview ? "Hide prompt preview" : "Show prompt preview (dev/demo)"}
+            <WandSparkles aria-hidden="true" size={16} />
+            Confirm edits and regenerate
           </button>
-          {showPromptPreview ? (
-            <pre className="mt-3 max-h-56 overflow-auto whitespace-pre-wrap rounded-md border border-zinc-800 bg-zinc-950 p-3 text-xs text-zinc-300">
-              {generatedPrompt}
-            </pre>
-          ) : null}
+          <button
+            className="journal-button-secondary"
+            disabled={!hasPendingTranscriptEdit || isRegenerating}
+            onClick={onDiscardTranscriptEdit}
+            type="button"
+          >
+            Discard edits
+          </button>
         </div>
+      </div>
+
+      <div className="journal-panel p-4">
+        <h3 className="text-sm font-semibold text-[color:var(--color-ink)]">Refine the companion image</h3>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {REFINEMENT_OPTIONS.map((option) => (
+            <button
+              className="journal-chip"
+              disabled={isRegenerating}
+              key={option}
+              onClick={() => onRegenerate(option)}
+              type="button"
+            >
+              <Sparkles aria-hidden="true" size={15} />
+              {option}
+            </button>
+          ))}
+          <button
+            className="journal-chip"
+            disabled={isRegenerating}
+            onClick={() => onRegenerate()}
+            type="button"
+          >
+            <RefreshCcw aria-hidden="true" size={15} />
+            Regenerate
+          </button>
+        </div>
+      </div>
+
+      {canPreviewPrompt && generatedPrompt ? (
+        <details className="journal-panel p-4">
+          <summary className="cursor-pointer list-none text-sm font-semibold text-[color:var(--color-ink)] [&::-webkit-details-marker]:hidden">
+            Prompt details
+          </summary>
+          <pre className="mt-3 max-h-56 overflow-auto whitespace-pre-wrap rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-paper)] p-3 text-xs leading-5 text-[color:var(--color-muted)]">
+            {generatedPrompt}
+          </pre>
+        </details>
       ) : null}
-      {errorMessage ? <p className="mt-4 text-sm text-rose-300">{errorMessage}</p> : null}
-      <button
-        className="mt-5 rounded-md border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-100"
-        disabled={isRegenerating}
-        onClick={onReset}
-        type="button"
-      >
-        Reset / Delete session
-      </button>
+
+      {errorMessage ? <p className="text-sm text-[color:var(--color-danger)]">{errorMessage}</p> : null}
+
+      <div>
+        <button
+          className="journal-button-danger"
+          disabled={isRegenerating}
+          onClick={onReset}
+          type="button"
+        >
+          <Trash2 aria-hidden="true" size={16} />
+          Start over / delete session
+        </button>
+      </div>
     </section>
   );
 }

@@ -11,8 +11,9 @@ import {
 test("canTransition allows only next stage", () => {
   assert.equal(canTransition("intro", "consent"), true);
   assert.equal(canTransition("intro", "recording"), false);
-  assert.equal(canTransition("review", "result"), false);
-  assert.equal(canTransition("generating", "result"), true);
+  assert.equal(canTransition("consent", "recording"), true);
+  assert.equal(canTransition("recording", "result"), true);
+  assert.equal(canTransition("consent", "result"), false);
 });
 
 test("stopMediaStream stops all tracks", () => {
@@ -40,8 +41,27 @@ test("resetSessionState clears phase 2 session fields and returns intro", () => 
       },
     } as unknown as MediaStream,
     transcript: "sample transcript",
-    visibleCueEstimate: ["thoughtful"],
-    confirmedVisibleTone: ["soft"],
+    stagedTranscript: "edited transcript",
+    sampledFaceFrames: ["data:image/jpeg;base64,aGVsbG8="],
+    mixedSignalBrief: {
+      transcriptSummary: "summary",
+      spokenValence: "neutral" as const,
+      visualAffect: "calm" as const,
+      signalRelationship: "aligned" as const,
+      sceneEnergy: "low" as const,
+      spatialMood: "balanced" as const,
+      paletteMood: "muted_cool" as const,
+      abstractionLevel: "symbolic" as const,
+      confidence: "medium" as const,
+      spokenThemes: ["change"],
+      spokenEmotions: ["relief"],
+      visualAffectSignals: ["soft gaze"],
+      signalTensions: [],
+      symbolicElements: ["path"],
+      sceneConcept: "concept",
+      atmosphere: "atmosphere",
+      composition: "composition",
+    },
     generatedPrompt: "prompt",
     generatedImage: "base64",
     isLoading: true,

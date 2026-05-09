@@ -1,4 +1,6 @@
 import React from "react";
+import { Trash2 } from "lucide-react";
+
 type PrivacyResetButtonProps = {
   onReset: () => void;
 };
@@ -6,11 +8,12 @@ type PrivacyResetButtonProps = {
 export function PrivacyResetButton({ onReset }: PrivacyResetButtonProps) {
   return (
     <button
-      className="rounded-md border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-100"
+      className="journal-button-danger self-start"
       onClick={onReset}
       type="button"
     >
-      Reset / Delete session
+      <Trash2 aria-hidden="true" size={16} />
+      Start over / delete session
     </button>
   );
 }
