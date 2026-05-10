@@ -1,8 +1,8 @@
 # InnerCanvas
 
-InnerCanvas is a privacy-conscious visual journaling app that turns a short reflection into an abstract symbolic image. The project idea is to give people a gentler way to see and revisit what they are feeling without framing the output as a diagnosis, score, or claim about their true emotional state.
+InnerCanvas transforms personal reflections into emotionally resonant visual journal entries, blending voice and visual cues into personalized symbolic imagery.
 
-The app lets a user speak, show, or type what is present for them in the moment. It then combines the reflection text with optional visual context from sampled camera frames to create a mixed-signal brief, which is used as art direction for a generated visual journal entry.
+Each entry turns what someone says, shows, or types in the moment into a distinctive canvas shaped by emotional nuance, atmosphere, and meaning. The result is a more expressive way to capture an inner state and revisit it through imagery.
 
 ## What the App Does
 
