@@ -155,10 +155,6 @@ export function RecordingScreen({
       <h2 className="font-serif text-3xl font-semibold leading-tight text-[color:var(--color-ink)]">
         Create a visual journal entry
       </h2>
-      <p className="mt-3 max-w-2xl text-base leading-7 text-[color:var(--color-muted)]">
-        Speak, show, or type what is here right now. InnerCanvas turns it into a visual journal and mood
-        snapshot.
-      </p>
       {noticeMessage ? (
         <p className="journal-panel mt-4 px-3 py-2 text-sm text-[color:var(--color-muted)]">
           {noticeMessage}

@@ -12,7 +12,7 @@ test("session starts directly on the recording stage", () => {
   assert.equal(INITIAL_SESSION_STATE.stage, "recording");
 });
 
-test("recording screen uses focused entry copy and removes repeated disclaimer text", () => {
+test("recording screen uses focused entry heading without duplicating shell subtitle", () => {
   const html = renderToStaticMarkup(
     createElement(RecordingScreen, {
       continueLabel: "Create entry",
@@ -29,7 +29,7 @@ test("recording screen uses focused entry copy and removes repeated disclaimer t
   );
 
   assert.match(html, /Create a visual journal entry/i);
-  assert.match(
+  assert.doesNotMatch(
     html,
     /Speak, show, or type what is here right now\. InnerCanvas turns it into a visual journal and mood snapshot\./i
   );
